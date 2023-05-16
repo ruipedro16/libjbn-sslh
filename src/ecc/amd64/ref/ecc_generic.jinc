@@ -218,3 +218,176 @@ inline fn _ecc_double(#secret stack u64[NLIMBS] px py pz qx qy qz) -> #secret st
 
     return qx, qy, qz;
 }
+
+inline fn _ecc_add(#secret stack u64[NLIMBS] x1 y1 z1 x2 y2 z2 x3 y3 z3) 
+                -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
+    #secret stack u64[NLIMBS] t0 t1 t2 t3 t4;
+    #secret stack u64[NLIMBS] tmp;
+
+    // 1: t0 ← X1 · X2
+    t0 = _fp_mul(x1, x2, t0);
+
+    // 2: t1 ← Y1 · Y2
+    t1 = _fp_mul(y1, y2, t1);
+
+    // 3: t2 ← Z1 · Z2
+    t2 = _fp_mul(z1, z2, t2);
+
+    // 4: t3 ← X1 + Y1
+    tmp = __fp_copy(x1, tmp); // tmp holds the result of x1
+    tmp = _fp_add(tmp, y1);   // tmp holds the result of x1 + y1
+    t3 = __fp_copy(tmp, t3);
+
+    // 5: t4 ← X2 + Y2
+    tmp = __fp_copy(x2, tmp); // tmp holds the result of x2
+    tmp = _fp_add(tmp, y2);   // tmp holds the result of x2 + y2
+    t4 = __fp_copy(tmp, t4);
+    
+    // 6: t3 ← t3 · t4
+    tmp = __fp_copy(t3, tmp);  // tmp holds the result of t3
+    t3 = _fp_mul(tmp, t4, t3); // tmp holds the result of t3 . t4
+
+    // 7: t4 ← t0 + t1
+    tmp = __fp_copy(t0, tmp); // tmp holds the result of t0
+    tmp = _fp_add(tmp, t1);   // tmp holds the result of t0 + t1
+    t4 = __fp_copy(tmp, t4); 
+
+    // 8: t3 ← t3 − t4
+    t3 = _fp_sub(t3, t4);
+
+    // 9: t4 ← Y1 + Z1
+    tmp = __fp_copy(y1, tmp);  // tmp holds the result of y1
+    tmp = _fp_add(tmp, z1);    // tmp holds the result of y1 + z1
+    t4 = __fp_copy(tmp, t4);
+
+    // 10: X3 ← Y2 + Z2
+    tmp = __fp_copy(y2, tmp);  // tmp holds the result of y2
+    tmp = _fp_add(tmp, z2);    // tmp holds the result of y2 + z2
+    x3 = __fp_copy(tmp, x3); 
+
+    // 11: t4 ← t4 · X3
+    t4 = _fp_mulU(t4, x3);
+
+    // 12: X3 ← t1 + t2
+    tmp = __fp_copy(t1, tmp);  // tmp holds the result of t1
+    tmp = _fp_add(tmp, t2);    // tmp holds the result of t1 + t2
+    x3 = __fp_copy(tmp, x3);
+
+    // 13: t4 ← t4 − X3
+    t4 = _fp_sub(t4, x3);
+
+    // 14: X3 ← X1 + Z1
+    tmp = __fp_copy(x1, tmp); // tmp holds the result of x1
+    tmp = _fp_add(tmp, z1);   // tmp holds the result of x1 + z1
+    x3 = __fp_copy(tmp, x3);
+
+    // 15: Y3 ← X2 + Z2
+    tmp = __fp_copy(x2, tmp);
+    tmp = _fp_add(tmp, z2);   // tmp holds the result of x2 + z2
+    y3 = __fp_copy(tmp, y3);
+
+    // 16: X3 ← X3 · Y3
+    x3 = _fp_mulU(x3, y3);
+
+    // 17: Y3 ← t0 + t2
+    tmp = __fp_copy(t0, tmp);
+    tmp = _fp_add(tmp, t2); // tmp holds the result of t0 + t2
+    y3 = __fp_copy(tmp, y3);
+
+    // 18: Y3 ← X3 − Y3
+    tmp = __fp_copy(x3, tmp);
+    tmp = _fp_sub(tmp, y3); // tmp holds the result of x3 - y3
+    y3 = __fp_copy(tmp, y3);
+
+    // 19: Z3 ← b · t2
+    z3 = _fp_mul(glob_b, t2, z3);
+    
+    // 20: X3 ← Y3 − Z3
+    tmp = __fp_copy(y3, tmp);
+    tmp = _fp_sub(tmp, z3); // tmp holds the result of y3 - z3
+    x3 = __fp_copy(tmp, x3);
+
+    // 21: Z3 ← X3 + X3
+    tmp = __fp_copy(x3, tmp);
+    tmp = _fp_add(tmp, x3); // tmp holds the result of x3 + x3
+    z3 = __fp_copy(tmp, z3);
+
+    // 22: X3 ← X3 + Z3
+    tmp = __fp_copy(z3, tmp); // tmp holds the value of z3
+    x3 = _fp_add(x3, tmp);
+
+    // 23: Z3 ← t1 − X3
+    tmp = __fp_copy(t1, tmp);
+    tmp = _fp_sub(tmp, x3); // tmp holds the result of t1 - x3
+    z3 = __fp_copy(tmp, z3);
+
+    // 24: X3 ← t1 + X3 == X3 ← X3 + t1
+    x3 = _fp_add(x3, t1);
+
+    // 25: Y3 ← b · Y3
+    y3 = _fp_mulU(y3, glob_b);
+
+    // 26: t1 ← t2 + t2
+    tmp = __fp_copy(t2, tmp);
+    tmp = _fp_add(tmp, t2); // tmp holds the result of t2 + t2
+    t1 = __fp_copy(tmp, t1);
+
+    // 27: t2 ← t1 + t2 == t2 ← t2 + t1
+    t2 = _fp_add(t2, t1);
+
+    // 28: Y3 ← Y3 − t2
+    y3 = _fp_sub(y3, t2);
+
+    // 29: Y3 ← Y3 − t0
+    y3 = _fp_sub(y3, t0);
+
+    // 30: t1 ← Y3 + Y3
+    tmp = __fp_copy(y3, tmp);
+    tmp = _fp_add(tmp, y3); // tmp holds the result of y3 + y3
+    t1 = __fp_copy(tmp, t1);
+
+    // 31: Y3 ← t1 + Y3 == Y3 ← Y3 + t1
+    y3 = _fp_add(y3, t1);
+    
+    // 32: t1 ← t0 + t0
+    tmp = __fp_copy(t0, tmp);
+    tmp = _fp_add(tmp, t0); // tmp holds the result of t0 + t0
+    t1 = __fp_copy(tmp, t1);
+
+    // 33: t0 ← t1 + t0 == t0 ← t0 + t1
+    t0 = _fp_add(t0, t1);
+
+    // 34: t0 ← t0 − t2
+    t0 = _fp_sub(t0, t2);
+
+    // 35: t1 ← t4 · Y3
+    t1 = _fp_mul(t4, y3, t1);
+
+    // 36: t2 ← t0 · Y3
+    t2 = _fp_mul(t0, y3, t2);
+
+    // 37: Y3 ← X3 · Z3
+    y3 = _fp_mul(x3, z3, y3);
+
+    // 38: Y3 ← Y3 + t2
+    y3 = _fp_add(y3, t2);
+
+    // 39: X3 ← t3 · X3
+    tmp = __fp_copy(x3, tmp);
+    x3 = _fp_mul(t3, tmp, x3);
+
+    // 40: X3 ← X3 − t1
+    x3 = _fp_sub(x3, t1);
+
+    // 41: Z3 ← t4 · Z3
+    tmp = __fp_copy(z3, tmp);
+    z3 = _fp_mul(t4, tmp, z3);
+
+    // 42: t1 ← t3 · t0
+    t1 = _fp_mul(t3, t0, t1);
+
+    // 43: Z3 ← Z3 + t1
+    z3 = _fp_add(z3, t1);
+
+    return x3, y3, z3;
+}

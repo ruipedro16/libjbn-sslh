@@ -142,13 +142,13 @@ ProjectivePoint c_double(const ProjectivePoint *p) {
     fp_add(res.y, res.y, t0);
 
     // 28: t0 ← Y · Z
-     fp_mul(t0, p->y, p->z);
+    fp_mul(t0, p->y, p->z);
 
     // 29: t0 ← t0 + t0
-     fp_add(t0, t0, t0);
+    fp_add(t0, t0, t0);
 
     // 30: Z3 ← t0 · Z3
-     fp_mul(res.z, t0, res.z);
+    fp_mul(res.z, t0, res.z);
 
     // 31: X3 ← X3 − Z3
     fp_sub(res.x, res.x, res.z);
