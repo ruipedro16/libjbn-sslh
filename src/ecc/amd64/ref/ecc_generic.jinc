@@ -1,0 +1,220 @@
+require "../../../fp/amd64/ref/fp_generic.jinc"
+require "ecc_param.jinc"
+
+inline fn __fp_copy(reg const ptr u64[NLIMBS] a, reg mut ptr u64[NLIMBS] r) -> reg ptr u64[NLIMBS] {
+    #secret reg u64 t;
+    inline int i;
+
+    for i = 0 to NLIMBS {
+        t = a[i];
+        r[i] = t;    
+    }
+
+    return r;
+}
+
+inline fn __ecc_copy(reg const ptr u64[NLIMBS] px py pz,
+                     reg mut ptr u64[NLIMBS] qx qy qz)
+                  -> reg ptr u64[NLIMBS], reg ptr u64[NLIMBS], reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+
+    // copy x
+    for i = 0 to NLIMBS {
+        t = px[i];
+        qx[i] = t;
+    }
+
+    // copy y
+    for i = 0 to NLIMBS {
+        t = py[i];
+        qy[i] = t;
+    }
+
+    // copy z
+    for i = 0 to NLIMBS {
+        t = pz[i];
+        qz[i] = t;
+    }
+    
+    return qx, qy, qz;
+}
+
+inline fn __load_affine_point(#public reg u64 addr) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
+    #secret stack u64[2 * NLIMBS] tmp;
+    reg ptr u64[2 * NLIMBS] _tmp;
+    #secret stack u64[NLIMBS] x y;
+    
+    tmp = _bn2_load_(addr);
+    _tmp = tmp;
+    x, y = __bn2_unpack(_tmp);
+
+    return x, y;
+}
+
+inline fn __store_affine_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y) {
+    #secret stack u64[2 * NLIMBS] tmp;
+    reg ptr u64[2 * NLIMBS] _tmp;
+
+    tmp = __bn_pack2(x, y);
+    _tmp = tmp;
+    __bn2_store(addr, _tmp);
+}
+
+inline fn __load_projective_point(#public reg u64 addr) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
+    #secret stack u64[NLIMBS] x y z;
+    inline int i;
+
+    for i = 0 to NLIMBS {
+        x[i] = [addr + 8 * i];
+        y[i] = [addr + 8 * NLIMBS + 8 * i];
+        z[i] = [addr + 2 * 8 * NLIMBS + 8 * i];
+    }
+
+    return x, y, z;
+}
+
+inline fn __store_projective_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y z) {
+    #secret reg u64 tmp;
+    inline int i;
+
+    
+    for i = 0 to NLIMBS {
+        // store x
+        tmp = x[i];
+        [addr + 8 * i] = tmp;
+
+        // store y
+        tmp = y[i];
+        [addr + 8 * NLIMBS + 8 * i] = tmp;
+
+        // store z
+        tmp = z[i];
+        [addr + 2 * 8 * NLIMBS + 8 * i] = tmp;
+    }
+}
+
+inline fn _ecc_double(#secret stack u64[NLIMBS] px py pz qx qy qz) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {    
+    #secret stack u64[NLIMBS] t0 t1 t2 t3;
+    #secret stack u64[NLIMBS] tmp;
+
+    // 1: t0 ← X · X
+    t0 = _fp_sqr(px, t0);
+
+    // 2: t1 ← Y · Y
+    t1 = _fp_sqr(py, t1);
+
+    // 3: t2 ← Z · Z
+    t2 = _fp_sqr(pz, t2);
+
+    // 4: t3 ← X · Y
+    t3 = _fp_mul(px, py, t3);
+
+    // 5: t3 ← t3 + t3
+    tmp = __fp_copy(t3, tmp); // tmp holds the result of t3
+    t3 = _fp_add(t3, tmp);
+
+    // 6: Z3 ← X · Z
+    qz = _fp_mul(px, pz, qz);
+
+    // 7: Z3 ← Z3 + Z3
+    tmp = __fp_copy(qz, tmp); // tmp holds the result of z3;
+    tmp = _fp_add(tmp, qz);   // tmp holds the result of z3 + z3
+    qz = __fp_copy(tmp, qz);  // tmp holds the result of z3
+
+    // 8: Y3 ← b · t2
+    qy = _fp_mul(glob_b, t2, qy);
+
+    // 9: Y3 ← Y3 − Z3
+    qy = _fp_sub(qy, qz);
+
+    // 10: X3 ← Y3 + Y3
+    tmp = __fp_copy(qy, tmp);
+    tmp = _fp_add(tmp, qy);
+    qx = __fp_copy(tmp, qx);
+
+    // 11: Y3 ← X3 + Y3 == Y3 ← Y3 + X3
+    qy = _fp_add(qy, qx);  
+
+    // 12: X3 ← t1 − Y3
+    tmp = __fp_copy(t1, tmp);
+    tmp = _fp_sub(tmp, qy); // tmp holds the result of t1 - y3
+    qx = __fp_copy(tmp, qx);
+
+    // 13: Y3 ← t1 + Y3 == Y3 ← Y3 + t1
+    qy = _fp_add(qy, t1);
+
+    // 14: Y3 ← X3 · Y3 == Y3 ← Y3 · X3
+    qy = _fp_mulU(qy, qx);
+
+    // 15: X3 ← X3 · t3
+    qx = _fp_mulU(qx, t3);
+
+    // 16: t3 ← t2 + t2
+    tmp = __fp_copy(t2, tmp);
+    tmp = _fp_add(tmp, t2); // tmp holds the result of t2 + t2
+    t3 = __fp_copy(tmp, t3);
+
+    // 17: t2 ← t2 + t3
+    t2 = _fp_add(t2, t3);
+
+    // 18: Z3 ← b · Z3 == Z3 ← Z3 · b
+    qz = _fp_mulU(qz, glob_b);
+
+    // 19: Z3 ← Z3 − t2
+    tmp = __fp_copy(qz, tmp);
+    tmp = _fp_sub(tmp, t2); // tmp holds the result of qz - t2
+    qz = __fp_copy(tmp, qz);
+
+    // 20: Z3 ← Z3 − t0
+    qz = _fp_sub(qz, t0);
+
+    // 21: t3 ← Z3 + Z3
+    tmp = __fp_copy(qz, tmp);
+    tmp = _fp_add(tmp, qz); // tmp holds the result of qz + qz
+    t3 = __fp_copy(tmp, t3);
+
+    // 22: Z3 ← Z3 + t3
+    qz = _fp_add(qz, t3);
+
+    // 23: t3 ← t0 + t0
+    tmp = __fp_copy(t0, tmp);
+    tmp = _fp_add(tmp, t0); // tmp holds the result of t0 + t0
+    t3 = __fp_copy(tmp, t3);
+
+    // 24: t0 ← t3 + t0 == t0 ← t0 + t3
+    t0 = _fp_add(t0, t3);
+
+    // 25: t0 ← t0 − t2
+    t0 = _fp_sub(t0, t2);
+
+    // 26: t0 ← t0 · Z3
+    t0 = _fp_mulU(t0, qz);
+
+    // 27: Y3 ← Y3 + t0
+    qy = _fp_add(qy, t0);
+
+    // 28: t0 ← Y · Z
+    t0 = _fp_mul(py, pz, t0);
+
+    // 29: t0 ← t0 + t0
+    tmp = __fp_copy(t0, tmp);
+    tmp = _fp_add(tmp, t0); // tmp holds the result of t0 + t0
+    t0 = __fp_copy(tmp, t0);
+
+    // 30: Z3 ← t0 · Z3 == Z3 ← Z3 · t0
+    qz = _fp_mulU(qz, t0);
+    
+    // 31: X3 ← X3 − Z3
+    qx = _fp_sub(qx, qz);
+
+    // 32: Z3 ← t0 · t1
+    qz = _fp_mul(t0, t1, qz);
+
+    // 33: Z3 ← Z3 + Z3
+    tmp = __fp_copy(qz, tmp);
+    tmp = _fp_add(tmp, qz); // tmp holds the result of qz + qz
+    qz = __fp_copy(tmp, qz);
+
+    return qx, qy, qz;
+}
