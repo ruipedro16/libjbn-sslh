@@ -41,15 +41,15 @@ cd $TEST_DIR || exit 1
 
 # Test Add
 gcc test_ecc_add.c *.s -o add.o
-(./add.o > /dev/null 2<&1 && echo "Add works") || (echo "Add failed" ; exit 4)
+(./add.o > /dev/null 2>&1 && echo "Add works") || (echo "Add failed" ; exit 4)
 
 # Test Double
 gcc test_ecc_double.c *.s -o double.o
-(./double.o > /dev/null 2<&1 && echo "Double works" ) || (echo "Double failed" ; exit 4)
+(./double.o > /dev/null 2>&1 && echo "Double works" ) || (echo "Double failed" ; exit 4)
 
 # Test Scalar Mul
 gcc test_ecc_scalar_mult.c *.s -o scalar_mul.o
-(./scalar_mul.o > /dev/null 2<&1 && echo "Scalar Mult works" ) || (echo "Scalar Mult failed" ; exit 4)
+(./scalar_mul.o > /dev/null 2>&1 && echo "Scalar Mult works" ) || (echo "Scalar Mult failed" ; exit 4)
 
 # Test Mixed Add
 
