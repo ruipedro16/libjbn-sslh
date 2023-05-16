@@ -1,0 +1,440 @@
+require "bn_param.jinc"
+
+inline fn __bn_load(#public reg u64 a) -> #secret stack u64[NLIMBS] {
+    inline int i;
+    #secret stack u64[NLIMBS] x;
+    #secret reg u64 t;
+
+    for i = 0 to NLIMBS {
+        t = [a + 8 * i];
+        x[i] = t;
+    }
+
+    return x;
+}
+
+/*
+ * Stores a BN into memory
+ */
+inline fn __bn_store(#public reg u64 a, reg ptr u64[NLIMBS] b) {
+    inline int i;
+    #secret reg u64 t;
+
+    for i = 0 to NLIMBS {
+        t = b[i];
+        [a + 8 * i] = t;
+    }
+}
+
+/*
+ * Loads a double BN from memory
+ */ 
+inline fn _bn2_load_(#public reg u64 a) -> #secret stack u64[2 * NLIMBS] { 
+    inline int i;
+    #secret stack u64[2 * NLIMBS] x;
+    #secret reg u64 t;
+
+    for i = 0 to 2 * NLIMBS {
+        t = [a + 8 * i];
+        x[i] = t;
+    }
+
+    return x;
+}
+
+/*
+ * Stores a double BN into memory
+ */ 
+inline fn __bn2_store(#public reg u64 a, reg ptr u64[2 * NLIMBS] b) {
+    inline int i;
+    #secret reg u64 t;
+
+    for i = 0 to 2*NLIMBS {
+        t = b[i];
+        [a + 8 * i] = t;
+    }
+}
+
+/*
+ * Unpacks a double BN into two BNs
+ */
+inline fn __bn2_unpack(reg ptr u64[2 * NLIMBS] a) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
+    inline int i;
+    #secret stack u64[NLIMBS] hi lo;
+    #secret reg u64 t1 t2;
+
+    for i = 0 to NLIMBS {
+        t1 = a[i];
+        t2 = a[NLIMBS + i];
+        lo[i] = t1;
+        hi[i] = t2;
+    }
+
+    return hi, lo;
+}
+
+/*
+ * Packs two bignums into a double bignum
+ */ 
+inline fn __bn_pack2(reg ptr u64[NLIMBS] lo hi) -> #secret stack u64[2 * NLIMBS] {
+    inline int i;
+    #secret stack u64[2 * NLIMBS] r;
+    #secret reg u64 t;
+
+    for i = 0 to NLIMBS {
+        t = lo[i];
+        r[i] = t;
+    }
+
+    for i = 0 to NLIMBS {
+        t = hi[i];
+        r[NLIMBS + i] = t;
+    }
+
+    return r;
+}
+
+/*
+ * Compares two field elements.
+ * If a == b, return 1. Otherwise, return 0.
+ */
+inline fn __bn_eq(reg ptr u64[NLIMBS] a b) -> #secret reg u64 {
+    inline int i;
+    #secret reg u64 acc are_equal t res;
+    #secret reg bool zf;
+
+    res = 0;
+    are_equal = 1;
+    acc = 0;
+    
+    for i = 0 to NLIMBS {
+        t = a[i];
+        t ^= b[i];
+        acc |= t;
+    }
+
+    (_, _, _, _, zf, _) = #AND(acc, acc);
+    res = are_equal if zf;
+    
+    return res;
+}
+
+#nomodmsf fn _bn_eq(reg ptr u64[NLIMBS] a b) -> #secret reg u64 {
+    #secret reg u64 r;
+    r = __bn_eq(a,b);
+    return r;
+}
+
+inline fn _bn_eq_(reg ptr u64[NLIMBS] _a _b) -> #secret reg u64 {
+    #secret reg u64 r;
+    reg ptr u64[NLIMBS] a b;
+
+    a = _a;
+    b = _b;
+    r = _bn_eq(a,b);
+    r = r;
+    return r;
+}
+
+/*
+ * Checks if a bignum is zero.
+ * If a == 0, return 1. Otherwise, return 0.
+ */ 
+inline fn __bn_test0(reg ptr u64[NLIMBS] a) -> #secret reg u64 {
+    inline int i;
+    #secret reg u64 acc is_zero res;
+    #secret reg bool zf;
+
+    res = 0;
+    is_zero = 1;    
+    acc = a[0];
+
+    for i = 1 to NLIMBS {
+        acc |= a[i];
+    }
+
+    // _ = #init_msf(); // é preciso se o return for #public
+
+    (_, _, _, _, zf, _) = #AND(acc, acc);
+    res = is_zero if zf;
+
+    return res;
+}
+
+#nomodmsf fn _bn_test0(reg ptr u64[NLIMBS] a) -> #secret reg u64 {
+    #secret reg u64 r;
+    r = __bn_test0(a);
+    return r;
+}
+
+inline fn __bn_copy(reg ptr u64[NLIMBS] a) -> #secret stack u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+    #secret stack u64[NLIMBS] r;
+    
+    for i = 0 to NLIMBS {
+        t = a[i];
+        r[i] = t;
+    }
+    
+    return r;
+}
+
+inline fn __bn_copy2(reg ptr u64[NLIMBS] a r)-> reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+    
+    for i = 0 to NLIMBS {
+        t = a[i];
+        r[i] = t;
+    }
+    
+    return r;
+}
+
+/*
+ * Conditional move bignum [b] into [a]
+ * cond ? b : a
+ */
+inline fn __bn_cmov(#secret reg bool cond, reg ptr u64[NLIMBS] a b) -> reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+    
+    for i = 0 to NLIMBS {
+        t = a[i];
+        t = b[i] if cond;
+        a[i] = t;
+    }
+    
+    return a;
+}
+
+/*
+ * Zeroing a BN
+ */
+inline fn __bn_set0(reg ptr u64[NLIMBS] a) -> reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+    t = 0;
+
+    for i = 0 to NLIMBS {
+        a[i] = t;
+    }
+
+    return a;
+}
+
+/*
+ * Add a digit and propagate carry
+ */
+inline fn __bn_add1c(reg ptr u64[NLIMBS] a, #secret reg u64 b) -> #secret reg bool, reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg bool cf;
+
+    cf, a[0] += b;
+  
+    for i = 1 to NLIMBS { 
+        cf, a[i] += 0 + cf; 
+    }
+
+    return cf, a;
+}
+
+/*
+ * Multi-limb addition
+ */ 
+inline fn __bn_addc(reg ptr u64[NLIMBS] a b) -> #secret reg bool, reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg bool cf;
+    #secret reg u64 t;
+
+    t = b[0];
+    cf, a[0] += t;
+    
+    for i = 1 to NLIMBS { 
+        t = b[i];
+        cf, a[i] += t + cf;
+    }
+
+    return cf, a;
+}
+
+/*
+ * Non-inlined version
+ */
+#nomodmsf fn _bn_addc(reg ptr u64[NLIMBS] a b) -> #secret reg bool, reg ptr u64[NLIMBS] {
+    #secret reg bool cf;
+    cf, a = __bn_addc(a, b);
+    return cf, a;
+}
+
+/*
+ * Multi-limb subtraction
+ */
+inline fn __bn_subc(reg ptr u64[NLIMBS] a b) -> #secret reg bool, reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg bool cf;
+    #secret reg u64 t;
+
+    t = b[0];
+    cf, a[0] -= t;
+    
+    for i = 1 to NLIMBS {
+        t = b[i];
+        cf, a[i] -= t - cf;
+    }
+
+    return cf, a;
+}
+
+/*
+ * Non-inlined version
+ */
+#nomodmsf fn _bn_subc(reg ptr u64[NLIMBS] a b) -> #secret reg bool, reg ptr u64[NLIMBS] {
+    #secret reg bool cf;
+    cf, a = __bn_subc(a, b);
+    return cf, a;
+}
+
+inline fn __addacc3(#secret reg u64 b1 b0, reg u64[3] a, inline int k) -> #secret reg u64[3] {
+    #secret reg bool cf;
+    cf, a[k % 3] += b0;
+    cf, a[(k+1) % 3] += b1 + cf;
+    cf, a[(k+2) % 3] += 0 + cf;
+    return a;
+}
+
+inline fn __muln_innerloop(inline int k istart iend, reg ptr u64[NLIMBS] a b, #secret reg u64[3] x) -> #secret reg u64[3] {
+    #secret reg u64 t1, t0;
+    inline int i, j;
+    
+    for i = istart to iend {
+        j = k - i;
+        t0 = a[i];
+        t1, t0 = t0 * b[j];
+        x = __addacc3(t1, t0, x, k);
+    }
+
+    return x;
+}
+
+inline fn __bn_muln(reg ptr u64[NLIMBS] a b, reg ptr u64[2 * NLIMBS] r) -> reg ptr u64[2 * NLIMBS] {
+    inline int k;
+    #secret reg u64 t0 t1;
+    #secret reg u64[3] x;
+    #secret reg bool cf;
+
+
+    t0 = a[0];
+    t1, t0 = t0 * b[0];
+    r[0] = t0;
+    x[1] = t1;
+    
+    _, _, _, _, _, x[2] = #set0();
+    _, _, _, _, _, x[0] = #set0();
+    
+    for k = 1 to NLIMBS {
+        x = __muln_innerloop(k, 0, k + 1, a, b, x);
+        t0 = x[k % 3];
+        _, _, _, _, _, x[k % 3] = #set0();
+        r[k] = t0;
+    }
+
+    for k = NLIMBS to 2 * NLIMBS - 1 {
+        x = __muln_innerloop(k, k - NLIMBS + 1, NLIMBS, a, b, x);
+        t0 = x[k % 3];
+        _, _, _, _, _, x[k % 3] = #set0();
+        r[k] = t0;
+    }
+
+    r[2 * NLIMBS - 1] = x[(2 * NLIMBS - 1) % 3];
+    return r;
+}
+
+#nomodmsf fn _bn_muln(reg ptr u64[NLIMBS] a b, reg ptr u64[2 * NLIMBS] r) -> reg ptr u64[2 * NLIMBS] {
+    r = __bn_muln(a, b, r);
+    return r;
+}
+
+inline fn __addacc3x2(#secret reg u64 x y, #secret reg u64[3] a, inline int k) -> #secret reg u64[3] {
+    #secret reg bool cf;
+    #secret reg u64 t b2 b1 b0;
+
+    b1, b0 = x * y;
+
+    t = b0; 
+    b0 <<= 1;
+    _, cf, _, _, _, b1 = #SHLD(b1, t, 1);
+
+    b2 = #MOV(0);
+    cf, b2 += b2 + cf;
+    cf, a[k % 3] += b0;
+    cf, a[(k+1) % 3] += b1 + cf;
+    cf, a[(k+2) % 3] += b2 + cf;
+    return a;
+}
+
+inline fn __sqrn_innerloop(inline int k istart iend, reg ptr u64[NLIMBS] a, #secret reg u64[3] x) -> #secret reg u64[3] {
+    #secret reg u64 ti, tj;
+    inline int i, j;
+    
+    for i = istart to iend {
+        j = k-i;
+        ti = a[i];
+        tj = a[j];
+        x = __addacc3x2(ti, tj, x, k);
+    }
+
+    return x;
+}
+
+/*
+ * K é o numero de limbs => não é um input privado logo nao e preciso fazer masking
+ */ 
+inline fn __bn_sqrn(reg ptr u64[NLIMBS] a, reg ptr u64[2 * NLIMBS] r) -> reg ptr u64[2 * NLIMBS] {
+    inline int k;
+    #secret reg u64 t0 t1;
+    #secret reg u64[3] x;
+    #secret reg bool cf;
+
+    t0 = a[0];
+    t1, t0 = t0 * t0;
+    r[0] = t0;
+    x[1] = t1;
+    _, _, _, _, _, x[2] = #set0();
+    _, _, _, _, _, x[0] = #set0();
+
+    for k = 1 to NLIMBS {
+        x = __sqrn_innerloop(k, 0, (k+1)/2, a, x);
+        #inline if (k % 2 == 0) {
+            t0 = a[k/2];
+            t1, t0 = t0 * t0;
+            x = __addacc3(t1, t0, x, k);
+        }
+
+        t0 = x[k % 3];
+        _, _, _, _, _, x[k % 3] = #set0();
+        r[k] = t0;
+    }
+
+    for k = NLIMBS to 2 * NLIMBS - 1 {
+        x = __sqrn_innerloop(k, k-NLIMBS+1, (k+1)/2, a, x);
+        #inline if (k % 2 == 0) {
+            t0 = a[k/2];
+            t1, t0 = t0 * t0;
+            x = __addacc3(t1, t0, x, k);
+        }
+
+        t0 = x[k % 3];
+        _, _, _, _, _, x[k % 3] = #set0();
+        r[k] = t0;
+    }
+
+    r[2 * NLIMBS - 1] = x[(2 * NLIMBS - 1) % 3];
+    return r;
+}
+
+#nomodmsf fn _bn_sqrn(reg ptr u64[NLIMBS] a, reg ptr u64[2*NLIMBS] r) -> reg ptr u64[2 * NLIMBS] {
+    r = __bn_sqrn(a, r);
+    return r;
+}

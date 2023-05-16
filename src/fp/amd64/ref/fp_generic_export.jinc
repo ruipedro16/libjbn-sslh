@@ -1,0 +1,146 @@
+require "fp_generic.jinc"
+require "../../../bn/amd64/ref/bn_generic_export.jinc"
+
+export fn fp_add(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b;
+    reg ptr u64[NLIMBS] a b;
+
+    _a = __bn_load(ap); 
+    a = _a;
+  
+    _b = __bn_load(bp); 
+    b = _b;
+    
+    a = _fp_add(a, b);
+    __bn_store(rp, a);
+}
+
+export fn fp_sub(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b;
+    reg ptr u64[NLIMBS] a b;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    _b = __bn_load(bp); 
+    b = _b;
+
+    a = _fp_sub(a, b);
+    __bn_store(rp, a);
+}
+
+export fn fp_mul(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b _r;
+    reg ptr u64[NLIMBS] a b r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    _b = __bn_load(bp); 
+    b = _b;
+    r = _r;
+    r = _fp_mul(a, b, r);
+    __bn_store(rp, r);
+}
+
+export fn fp_sqr(#transient reg u64 rp ap) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _r;
+    reg ptr u64[NLIMBS] a r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+    
+    r = _r;
+    r = _fp_sqr(a, r);
+
+    __bn_store(rp, r);
+}
+
+export fn fp_expm_noct(#transient reg u64 rp ap bp) {
+    #msf reg u64 ms;
+
+    #secret stack u64[NLIMBS] _a _r;
+    #public stack u64[NLIMBS] _b;
+    reg ptr u64[NLIMBS] a b r;
+    #public stack u64 _rp; // to spill the register rp
+
+    ms = #init_msf();
+
+    _rp = rp;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    _b = __bn_load(bp); 
+
+    #declassify 
+    b = _b;
+                      
+    r = _r;
+    r, ms = _fp_exp(a, b, r, ms);
+    
+    rp = _rp; // load from the stack
+    rp = #protect(rp, ms);
+    r = #protect_ptr(r, ms);
+
+    __bn_store(rp, r);
+}
+
+export fn fp_inv(#transient reg u64 rp ap) {
+    #msf reg u64 ms;
+
+    #secret stack u64[NLIMBS] _a _r;
+    reg ptr u64[NLIMBS] a r;
+    #public stack u64 _ap _rp;
+
+    ms = #init_msf();
+
+    _a = __bn_load(ap); 
+
+    _rp = rp; // spill the register
+    _ap = ap;
+
+    a = _a;
+    r = _r;
+
+    r, ms = __fp_inv(a, r, ms);
+
+    rp = _rp; // load from the stack
+    rp = #protect(rp, ms);
+    r = #protect_ptr(r, ms);
+    __bn_store(rp, r);
+}
+
+export fn fp_toM(#transient reg u64 rp ap) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a;
+    reg ptr u64[NLIMBS] a;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    a = _fp_toM(a);
+    __bn_store(rp, a);
+}
+
+export fn fp_fromM(reg u64 rp ap) {
+    _ = #init_msf();
+  
+    #secret stack u64[NLIMBS] _a;
+    reg ptr u64[NLIMBS] a;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    a = _fp_fromM(a);
+    __bn_store(rp, a);
+}

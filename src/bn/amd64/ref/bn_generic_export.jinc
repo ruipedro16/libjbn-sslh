@@ -1,0 +1,123 @@
+require "bn_generic.jinc"
+require "bn_param.jinc"
+
+export fn bn_eq(#transient reg u64 ap bp) -> #secret reg u64 {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b;
+    reg ptr u64[NLIMBS] a b;
+    #secret reg u64 r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    _b = __bn_load(bp); 
+    b = _b;
+    
+    r = _bn_eq_(a, b);
+    return r;
+}
+
+export fn bn_test0(#transient reg u64 ap) -> reg u64 {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a;
+    reg ptr u64[NLIMBS] a;
+    reg u64 r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    r = __bn_test0(a);
+    r = r; // avoid extra assignment warning
+    return r;
+}
+
+export fn bn_copy(#transient reg u64 rp ap) {
+    _ = #init_msf();
+    
+    inline int i;
+    #secret reg u64 t;
+
+    for i = 0 to NLIMBS {
+        t = [ap + 8 * i];
+        [rp + 8*i] = t;
+    }
+}
+
+export fn bn_set0(#transient reg u64 rp) {
+    _ = #init_msf();
+
+    inline int i;
+
+    for i = 0 to NLIMBS {
+        [rp + 8*i] = 0;
+    }
+}
+
+export fn bn_addn(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b;
+    reg ptr u64[NLIMBS] a b;
+
+    _a = __bn_load(ap); 
+    a = _a;
+  
+    _b = __bn_load(bp); 
+    b = _b;
+    
+    _, a = __bn_addc(a, b);
+    __bn_store(rp, a);
+}
+
+export fn bn_subn(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+    
+    #secret stack u64[NLIMBS] _a _b;
+    reg ptr u64[NLIMBS] a b;
+
+    _a = __bn_load(ap); 
+    a = _a;
+ 
+    _b = __bn_load(bp); 
+    b = _b;
+
+    _, a = __bn_subc(a, b);
+    __bn_store(rp, a);
+}
+
+export fn bn_muln(#transient reg u64 rp ap bp) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a _b;
+    #secret stack u64[2 * NLIMBS] _r;
+    reg ptr u64[NLIMBS] a b;
+    reg ptr u64[2 * NLIMBS] r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+
+    _b = __bn_load(bp); 
+    b = _b;
+                      
+    r = _r;
+    r = __bn_muln(a, b, r);
+    __bn2_store(rp, r);
+}
+
+export fn bn_sqrn(#transient reg u64 rp ap) {
+    _ = #init_msf();
+
+    #secret stack u64[NLIMBS] _a;
+    #secret stack u64[2 * NLIMBS] _r;
+    reg ptr u64[NLIMBS] a;
+    reg ptr u64[2 * NLIMBS] r;
+
+    _a = __bn_load(ap); 
+    a = _a;
+    
+    r = _r;
+    r = __bn_sqrn(a, r);
+    __bn2_store(rp, r);
+}
