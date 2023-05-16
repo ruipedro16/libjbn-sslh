@@ -48,6 +48,8 @@ gcc test_ecc_double.c *.s -o double.o
 (./double.o > /dev/null 2<&1 && echo "Double works" ) || (echo "Double failed" ; exit 4)
 
 # Test Scalar Mul
+gcc test_ecc_scalar_mult.c *.s -o scalar_mul.o
+(./scalar_mul.o > /dev/null 2<&1 && echo "Scalar Mult works" ) || (echo "Scalar Mult failed" ; exit 4)
 
 # Test Mixed Add
 

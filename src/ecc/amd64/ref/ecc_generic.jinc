@@ -391,3 +391,75 @@ inline fn _ecc_add(#secret stack u64[NLIMBS] x1 y1 z1 x2 y2 z2 x3 y3 z3)
 
     return x3, y3, z3;
 }
+
+inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar
+                                       r0x r0y r0z
+                                       r1x r1y r1z, // P
+                          #msf reg u64 ms)
+                       -> #secret stack u64[NLIMBS], 
+                          #secret stack u64[NLIMBS], 
+                          #secret stack u64[NLIMBS], 
+                          #msf reg u64 {
+
+    inline int i; // to iterate over the limbs of a BN
+    #public reg u64 k; stack u64 sk; // to iterate over the bits of a limb
+    #public reg u64 t; stack u64 st; // current limb
+
+    reg bool cond cf;
+
+    #secret stack u64[NLIMBS] tmpx tmpy tmpz;
+
+    // R0 ← 0
+    // Point at infinity = (0 : 1 : 0)
+    for i = 0 to NLIMBS {
+        t = glob_oneM[i];
+        r0x[i] = 0;
+        r0y[i] = t;
+        r0z[i] = 0;
+    }
+
+    // R1 ← P // already set
+
+    for i = 0 to NLIMBS {
+        #declassify t = scalar[(int) i];
+        t = #protect(t, ms);
+
+
+        k = 64;
+        while { cond = (k > 0); } (cond) {
+            ms = #set_msf(cond, ms);
+            sk = k; // spill k
+
+            _, cf, _, _, _, t = #SHR(t, 1);
+            st = t; // spill limb
+            if (cf) {
+                ms = #set_msf(cf, ms);
+
+                // R0 ← R0 + R1
+                tmpx, tmpy, tmpz = _ecc_add(r0x, r0y, r0z, r1x, r1y, r1z, tmpx, tmpy, tmpz);
+                r0x, r0y, r0z = __ecc_copy(tmpx, tmpy, tmpz, r0x, r0y, r0z);
+
+                // R1 ← 2 . R1
+                tmpx, tmpy, tmpz = _ecc_double(r1x, r1y, r1z, tmpx, tmpy, tmpz);
+                r1x, r1y, r1z = __ecc_copy(tmpx, tmpy, tmpz, r1x, r1y, r1z);
+            } else { 
+                ms = #set_msf(!cf, ms); 
+
+                // R1 ← R0 + R1
+                tmpx, tmpy, tmpz = _ecc_add(r0x, r0y, r0z, r1x, r1y, r1z, tmpx, tmpy, tmpz);
+                r1x, r1y, r1z = __ecc_copy(tmpx, tmpy, tmpz, r1x, r1y, r1z);
+
+                // R0 ← 2 . R0
+                tmpx, tmpy, tmpz = _ecc_double(r0x, r0y, r0z, tmpx, tmpy, tmpz);
+                r0x, r0y, r0z = __ecc_copy(tmpx, tmpy, tmpz, r0x, r0y, r0z);
+            }
+            
+            k = sk;
+            k = #protect(k, ms);
+            k -= 1;
+        }
+        ms = #set_msf(!cond, ms);
+    }
+
+    return r0x, r0y, r0z, ms;
+}
