@@ -1,0 +1,33 @@
+// https://github.com/formosa-crypto/libjbn/blob/e5c3a1e875dd81d37b94107b73f6d51d5da1a0a3/src/sike/sike434/amd64/ref/bn_sike434.jinc
+
+u64[NLIMBS] glob_mp = {
+    0xffffffffffffffff,
+    0xffffffffffffffff,
+    0xffffffffffffffff
+};
+
+u64[NLIMBS] glob_p = {
+    0xffffffffffffffff,
+    0xffffffffffffffff,
+    0xffffffffffffffff
+};
+
+u64 glob_u0 = 1;
+
+u64[NLIMBS] glob_oneM = {
+    0x000000000000742c,
+    0x0000000000000000,
+    0x0000000000000000
+};
+
+u64[NLIMBS] glob_pm2 = {
+    0xfffffffffffffffd,
+    0xffffffffffffffff,
+    0xffffffffffffffff
+};
+
+u64[NLIMBS] glob_rM = {
+    0x28e55b65dcd69b30,
+    0xacec7367768798c2,
+    0xab27973f8311688d
+};
