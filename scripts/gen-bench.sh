@@ -43,3 +43,8 @@ done
 cp $PARAM_DIR/7/bn_param.jinc $BN_DIR
 cp $PARAM_DIR/7/fp_param.jinc $FP_DIR
 cp $PARAM_DIR/7/ecc_param.jinc $ECC_DIR
+
+# Restore NLIMBS macro IN C files
+sed -i "s/NLIMBS [0-9]\+/NLIMBS 7/" bn_generic.c
+sed -i "s/NLIMBS [0-9]\+/NLIMBS 7/" fp_generic.c
+sed -i "s/NLIMBS [0-9]\+/NLIMBS 7/" ecc_generic.c

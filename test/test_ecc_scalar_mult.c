@@ -346,7 +346,7 @@ ProjectivePoint c_scalar_mult(const uint64_t *scalar, const ProjectivePoint *p) 
     for (size_t i = 0; i < NLIMBS; i++) {  // iterate over the limbs of the scalar
         uint64_t limb = scalar[i];
 
-        for (size_t j = 0; j < 64; j++) { // iterate over the bits of the current limb
+        for (size_t j = 0; j < 64; j++) {  // iterate over the bits of the current limb
 
             bool shiftedBit = (limb & 1) != 0;  // Get the least significant bit
             limb >>= 1;                         // Right shift by 1
@@ -393,12 +393,11 @@ int main(int argc, const char **argv) {
 
     print_projective(&result);
 
-      if (eq_projective(&result, &expected)) {
+    if (eq_projective(&result, &expected)) {
         printf("Equal\n");
     } else {
         printf("Not Equal\n");
     }
-
 
     return eq_projective(&result, &expected) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
