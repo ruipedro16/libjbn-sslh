@@ -22,7 +22,7 @@ rm -rf $DATA_DIR
 
 # Create folders for benchmark data
 mkdir -p $DATA_DIR
-mkdir -p $DATA_DIR/sct $DATA_DIR/ct
+mkdir -p $DATA_DIR/sct $DATA_DIR/ct $DATA_DIR/tmp
 mkdir -p $DATA_DIR/sct/bn  $DATA_DIR/ct/bn 
 mkdir -p $DATA_DIR/sct/fp  $DATA_DIR/ct/fp 
 mkdir -p $DATA_DIR/sct/ecc $DATA_DIR/ct/ecc
@@ -63,26 +63,44 @@ for i in $(seq $MIN_LIMBS $MAX_LIMBS); do
     # Benchmark BN SCT
     gcc cpucycles.c printbench.h bn_generic_export.s bn_generic.c -o bn.o && ./bn.o 
     mkdir -p $DATA_DIR/sct/bn/$i && mv *.csv $DATA_DIR/sct/bn/$i
+    echo "Function;SCT" > $DATA_DIR/tmp/merged.csv             # merge all files
+    cat $DATA_DIR/sct/bn/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/sct/bn/$i/merged.csv # merge all files 
 
     # Benchmark BN CT
     gcc cpucycles.c printbench.h bn_generic_export_ct.s bn_generic.c -o bn.o && ./bn.o 
     mkdir -p $DATA_DIR/ct/bn/$i && mv *.csv $DATA_DIR/ct/bn/$i
+    echo "Function;CT" > $DATA_DIR/tmp/merged.csv             # merge all files
+    cat $DATA_DIR/ct/bn/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/ct/bn/$i/merged.csv # merge all files
 
     # Benchmark FP SCT
     gcc cpucycles.c printbench.h fp_generic_export.s fp_generic.c -o fp.o && ./fp.o 
     mkdir -p $DATA_DIR/sct/fp/$i && mv *.csv $DATA_DIR/sct/fp/$i
+    echo "Function;SCT" > $DATA_DIR/tmp/merged.csv             # merge all files
+    cat $DATA_DIR/sct/fp/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/sct/fp/$i/merged.csv # merge all files 
 
     # Benchmark FP CT
     gcc cpucycles.c printbench.h fp_generic_export_ct.s fp_generic.c -o fp.o && ./fp.o 
     mkdir -p $DATA_DIR/ct/fp/$i && mv *.csv $DATA_DIR/ct/fp/$i
+    echo "Function;CT" > $DATA_DIR/tmp/merged.csv             # merge all files
+    cat $DATA_DIR/ct/fp/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/ct/fp/$i/merged.csv # merge all files
 
     # Benchmark ECC SCT
     gcc cpucycles.c printbench.h ecc_generic_export.s ecc_generic.c -o ecc.o && ./ecc.o 
     mkdir -p $DATA_DIR/sct/ecc/$i && mv *.csv $DATA_DIR/sct/ecc/$i
+    echo "Function;SCT" > $DATA_DIR/tmp/merged.csv              # merge all files
+    cat $DATA_DIR/sct/ecc/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/sct/ecc/$i/merged.csv # merge all files 
 
     # Benchmark ECC CT
     gcc cpucycles.c printbench.h ecc_generic_export_ct.s ecc_generic.c -o ecc.o && ./ecc.o 
     mkdir -p $DATA_DIR/ct/ecc/$i && mv *.csv $DATA_DIR/ct/ecc/$i
+    echo "Function;CT" > $DATA_DIR/tmp/merged.csv              # merge all files
+    cat $DATA_DIR/ct/ecc/$i/*.csv >> $DATA_DIR/tmp/merged.csv  # merge all files
+    mv $DATA_DIR/tmp/merged.csv $DATA_DIR/ct/ecc/$i/merged.csv # merge all files
 done
 
 # Restore parameters for NLIMBS = 7
@@ -97,6 +115,9 @@ sed -i "s/NLIMBS [0-9]\+/NLIMBS 7/" ecc_generic.c
 
 # Remove object files
 rm $BENCH_DIR/*.o
+
+# Remove tmp directory
+rm -rf $DATA_DIR/tmp
 
 # Calculate and display script execution time
 end_time=$(date +%s)
