@@ -51,8 +51,50 @@ export fn ecc_scalar_mul(#transient reg u64 q p k) {
 
     qx, qy, qz, ms = _ecc_scalar_mul(scalar, qx, qy, qz, px, py, pz, ms);
 
-    // q = sq; // retrieve q from the stack
-    // q = #protect(q, ms);
-
     __store_projective_point(q, qx, qy, qz);
+}
+
+/*
+ * (X : Y : Z) -> (x, y)
+ * 
+ * x = X . Z^-1
+ * y = Y . Z^-1
+ */ 
+export fn ecc_normalize(#transient reg u64 q p) {
+    #msf reg u64 ms;
+
+    ms = #init_msf();
+
+    #secret stack u64[NLIMBS] px py pz;
+    #secret stack u64[NLIMBS] xa ya;
+
+    #public stack u64 sp sq;
+
+    px, py, pz = __load_projective_point(p); 
+
+    sp = p; // spill registers
+    sq = q; // spill registers
+
+    xa, ya, ms = __ecc_normalize(px, py, pz, ms);
+
+    q = sq;
+    q = #protect(q, ms);
+
+    __store_affine_point(q, xa, ya);
+}
+
+export fn ecc_mixed_add(#transient reg u64 r p q) {
+    #msf reg u64 ms;
+    ms = #init_msf();
+    
+    #secret stack u64[NLIMBS] x1 y1 z1;  
+    #secret stack u64[NLIMBS] x2 y2; // z2 is 1  
+    reg ptr u64[NLIMBS] x3 y3 z3;
+
+    x1, y1, z1 = __load_projective_point(p); 
+    x2, y2, _ = __load_projective_point(q);
+
+    x3, y3, z3 = __ecc_mixed_add(x1, y1, z1, x2, y2);
+
+    __store_projective_point(r, x3, y3, z3);
 }

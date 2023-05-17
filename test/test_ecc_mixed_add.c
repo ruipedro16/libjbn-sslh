@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define NLIMBS 7
 
@@ -20,6 +21,10 @@ extern void ecc_mixed_add(ProjectivePoint *r, const ProjectivePoint *p, const Pr
 uint64_t B[NLIMBS] = {0x5289a0cf641d011f, 0x9b88257189fed2b9, 0xa3b365d58dc8f17a,
                       0x5bc57ab6eff168ec, 0x9e51998bd84d4423, 0xbf8999cbac3b5695,
                       0x003f6cfce8b81771};
+
+uint64_t ONE[NLIMBS] = {0x000000000000742c, 0x0000000000000000, 0x0000000000000000,
+                        0xb90ff404fc000000, 0xd801a4fb559facd4, 0xe93254545f77410c,
+                        0x0000eceea7bd2eda};
 
 void print_num(const uint64_t *x) {
     printf("[");
@@ -88,7 +93,6 @@ ProjectivePoint c_mixed_add(const ProjectivePoint *p, const ProjectivePoint *q) 
 
     // 10: Y3 ← X2 · Z1
     fp_mul(res.y, q->x, p->z);
-
     // 11: Y3 ← Y3 + X1
     fp_add(res.y, res.y, p->x);
 
@@ -181,10 +185,9 @@ int main(int argc, const char **argv) {
 
         q.x[i] = i;
         q.y[i] = i + 1;
-        q.z[i] = i + 2;
     }
 
-    printf("Hello\n");
+    memcpy(q.z, ONE, sizeof(uint64_t) * NLIMBS);
 
     expected = c_mixed_add(&p, &q);
 
