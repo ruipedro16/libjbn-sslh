@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 5
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -22,7 +22,7 @@ extern void bn_sqrn(uint64_t *, uint64_t *);
 #include "cpucycles.c"
 #include "printbench.h"
 
-int bn_generic_main(void) {
+int main(void) {
 #define LOOPS 5
 #define TIMINGS 4096
 #define OP 8
