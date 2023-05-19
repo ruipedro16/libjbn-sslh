@@ -75,6 +75,18 @@ ProjectivePoint copyProjectivePoint(const ProjectivePoint *point) {
     }
 }
 
+ProjectivePoint randomPoint() {
+    ProjectivePoint point;
+
+    for (size_t i = 0; i < NLIMBS; i++) {
+        point.x[i] = (uint64_t)rand();  // Generate random 64-bit value for x
+        point.y[i] = (uint64_t)rand();  // Generate random 64-bit value for y
+        point.z[i] = (uint64_t)rand();  // Generate random 64-bit value for z
+    }
+
+    return point;
+}
+
 ProjectivePoint c_add(const ProjectivePoint *p, const ProjectivePoint *q) {
     ProjectivePoint res;
 
@@ -351,7 +363,7 @@ ProjectivePoint c_scalar_mult(const uint64_t *scalar, const ProjectivePoint *p) 
             bool shiftedBit = (limb & 1) != 0;  // Get the least significant bit
             limb >>= 1;                         // Right shift by 1
 
-            printf("Shifted bit: %d\n", shiftedBit);
+            // printf("Shifted bit: %d\n", shiftedBit);
 
             if (shiftedBit == 0) {
                 // R1 ← point_add(R0, R1)
@@ -373,31 +385,30 @@ ProjectivePoint c_scalar_mult(const uint64_t *scalar, const ProjectivePoint *p) 
 }
 
 int main(int argc, const char **argv) {
-    ProjectivePoint result, expected, p;
+#define NTESTS 500
+
+    ProjectivePoint p, result, expected;
+
     uint64_t t[NLIMBS] = {0xfffffffffffffff0, 0xffffffffffffffff, 0xffffffffffffffff,
                           0xfdc1767ae2ffffff, 0x7bc65c783158aea3, 0x6cfc5fd681c52056,
                           0x0002341f27177344};
 
-    // initialize P & Q
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
+    for (int i = 0; i < NTESTS; i++) {
+        p = randomPoint();
+
+        expected = c_scalar_mult(t, &p);
+
+        ecc_scalar_mul(&result, &p, t);
+
+        if (eq_projective(&result, &expected)) {
+            printf("ECC Double: %d/%d: %s\n", i + 1, NTESTS, "OK");
+        } else {
+            printf("ECC Double: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            return EXIT_FAILURE;
+        }
     }
 
-    expected = c_scalar_mult(t, &p);
+#undef NTESTS
 
-    print_projective(&expected);
-
-    ecc_scalar_mul(&result, &p, t);
-
-    print_projective(&result);
-
-    if (eq_projective(&result, &expected)) {
-        printf("Equal\n");
-    } else {
-        printf("Not Equal\n");
-    }
-
-    return eq_projective(&result, &expected) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

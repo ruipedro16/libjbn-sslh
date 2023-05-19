@@ -59,6 +59,18 @@ bool eq_projective(const ProjectivePoint *p, const ProjectivePoint *q) {
     return true;
 }
 
+ProjectivePoint randomPoint() {
+    ProjectivePoint point;
+
+    for (size_t i = 0; i < NLIMBS; i++) {
+        point.x[i] = (uint64_t)rand();  // Generate random 64-bit value for x
+        point.y[i] = (uint64_t)rand();  // Generate random 64-bit value for y
+        point.z[i] = (uint64_t)rand();  // Generate random 64-bit value for z
+    }
+
+    return point;
+}
+
 ProjectivePoint c_mixed_add(const ProjectivePoint *p, const ProjectivePoint *q) {
     ProjectivePoint res;
 
@@ -175,35 +187,28 @@ ProjectivePoint c_mixed_add(const ProjectivePoint *p, const ProjectivePoint *q) 
 }
 
 int main(int argc, const char **argv) {
+#define NTESTS 500
+
     ProjectivePoint p, q, result, expected;
 
-    // initialize P & Q
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
+    for (int i = 0; i < NTESTS; i++) {
+        p = randomPoint();
+        q = randomPoint();
+        memcpy(q.z, ONE, sizeof(uint64_t) * NLIMBS);  // Z2 = 1;
 
-        q.x[i] = i;
-        q.y[i] = i + 1;
+        expected = c_mixed_add(&p, &q);
+
+        ecc_mixed_add(&result, &p, &q);
+
+        if (eq_projective(&result, &expected)) {
+            printf("ECC Mixed Add: %d/%d: %s\n", i + 1, NTESTS, "OK");
+        } else {
+            printf("ECC Mixed Add: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            return EXIT_FAILURE;
+        }
     }
 
-    memcpy(q.z, ONE, sizeof(uint64_t) * NLIMBS);
+#undef NTESTS
 
-    expected = c_mixed_add(&p, &q);
-
-    printf("Expected:\n");
-    print_projective(&expected);
-
-    ecc_mixed_add(&result, &p, &q);
-
-    printf("Result:\n");
-    print_projective(&result);
-
-    if (eq_projective(&result, &expected)) {
-        printf("Equal\n");
-    } else {
-        printf("Not Equal\n");
-    }
-
-    return eq_projective(&result, &expected) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

@@ -55,6 +55,18 @@ bool eq_projective(const ProjectivePoint *p, const ProjectivePoint *q) {
     return true;
 }
 
+ProjectivePoint randomPoint() {
+    ProjectivePoint point;
+
+    for (size_t i = 0; i < NLIMBS; i++) {
+        point.x[i] = (uint64_t)rand();  // Generate random 64-bit value for x
+        point.y[i] = (uint64_t)rand();  // Generate random 64-bit value for y
+        point.z[i] = (uint64_t)rand();  // Generate random 64-bit value for z
+    }
+
+    return point;
+}
+
 ProjectivePoint c_add(const ProjectivePoint *p, const ProjectivePoint *q) {
     ProjectivePoint res;
 
@@ -192,47 +204,29 @@ ProjectivePoint c_add(const ProjectivePoint *p, const ProjectivePoint *q) {
     return res;
 }
 
-//
-
-/*
- * jasminc ../src/ecc/amd64/ref/ecc_generic_export.jinc -o ecc.s
- * jasminc ../src/fp/amd64/ref/fp_generic_export.jinc -o fp.s
- * gcc test_ecc_add.c *.s -o add.o
- * ./add.o || echo "failed"
- */
-
-// jasminc ../src/ecc/amd64/ref/ecc_generic_export.jinc -o ecc.s ; jasminc
-// ../src/fp/amd64/ref/fp_generic_export.jinc -o fp.s ; gcc test_ecc_add.c *.s -o add.o
-
 int main(int argc, const char **argv) {
+#define NTESTS 500
+
     ProjectivePoint p, q, result, expected;
 
-    // initialize P & Q
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
+    for (int i = 0; i < NTESTS; i++) {
+        p = randomPoint();
+        q = randomPoint();
 
-        q.x[i] = i;
-        q.y[i] = i + 1;
-        q.z[i] = i + 2;
+
+        expected = c_add(&p, &q);
+        
+        ecc_add(&result, &p, &q);
+
+        if (eq_projective(&result, &expected)) {
+            printf("ECC Add: %d/%d: %s\n", i + 1, NTESTS, "OK");
+        } else {
+            printf("ECC Add: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            return EXIT_FAILURE;
+        }
     }
 
-    expected = c_add(&p, &q);
+#undef NTESTS
 
-    printf("Expected:\n");
-    print_projective(&expected);
-
-    ecc_add(&result, &p, &q);
-
-    printf("Result:\n");
-    print_projective(&result);
-
-    if (eq_projective(&result, &expected)) {
-        printf("Equal\n");
-    } else {
-        printf("Not Equal\n");
-    }
-
-    return eq_projective(&expected, &result) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

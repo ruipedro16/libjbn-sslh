@@ -41,20 +41,20 @@ cd $TEST_DIR || exit 1
 
 # Test Add
 gcc test_ecc_add.c *.s -o add.o
-(./add.o > /dev/null 2>&1 && echo "Add works") || (echo "Add failed" ; exit 4)
+(./add.o > /dev/null 2>&1 && echo "Add works") || (echo "\033[31mAdd failed\033[0m" ; exit 4)
 
 # Test Double
 gcc test_ecc_double.c *.s -o double.o
-(./double.o > /dev/null 2>&1 && echo "Double works" ) || (echo "Double failed" ; exit 4)
+(./double.o > /dev/null 2>&1 && echo "Double works" ) || (echo "\033[31mDouble failed\033[0m" ; exit 4)
 
 # Test Scalar Mul
 gcc test_ecc_scalar_mult.c *.s -o scalar_mul.o
-(./scalar_mul.o > /dev/null 2>&1 && echo "Scalar Mult works" ) || (echo "Scalar Mult failed" ; exit 4)
+(./scalar_mul.o > /dev/null 2>&1 && echo "Scalar Mult works" ) || (echo "\033[31mScalar Mult failed\033[0m" ; exit 4)
 
 # Test Mixed Add
 gcc test_ecc_mixed_add.c *.s -o mixed_add.o
-(./mixed_add.o > /dev/null 2>&1 && echo "Mixed Add works" ) || (echo "Mixed Add failed" ; exit 4)
+(./mixed_add.o > /dev/null 2>&1 && echo "Mixed Add works" ) || (echo "\033[31mMixed Add failed\033[0m" ; exit 4)
 
 # Test Normalize
 gcc test_ecc_normalize.c *.s -o normalize.o
-(./normalize.o > /dev/null 2>&1 && echo "Normalize works") || (echo "Normalize failed" ; exit 4)
+(./normalize.o > /dev/null 2>&1 && echo "Normalize works") || (echo "\033[31mNormalize failed\033[0m" ; exit 4)

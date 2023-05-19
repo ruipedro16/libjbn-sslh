@@ -50,20 +50,23 @@ bool eq_affine(const AffinePoint *p, const AffinePoint *q) {
     return true;
 }
 
+ProjectivePoint randomPoint() {
+    ProjectivePoint point;
+
+    for (size_t i = 0; i < NLIMBS; i++) {
+        point.x[i] = (uint64_t)rand();  // Generate random 64-bit value for x
+        point.y[i] = (uint64_t)rand();  // Generate random 64-bit value for y
+        point.z[i] = (uint64_t)rand();  // Generate random 64-bit value for z
+    }
+
+    return point;
+}
+
 AffinePoint c_normalize(const ProjectivePoint *p) {
     AffinePoint res;
     uint64_t z_inv[NLIMBS];
 
-    printf("Z^-1 = ");
-    print_num(z_inv);
-
-    printf("Z = ");
-    print_num(p->z);
-
     fp_inv(z_inv, p->z);
-
-    printf("Z^-1 = ");
-    print_num(z_inv);
 
     // RX <- Z^-1 . X
     fp_mul(res.x, z_inv, p->x);
@@ -75,29 +78,26 @@ AffinePoint c_normalize(const ProjectivePoint *p) {
 }
 
 int main(int argc, const char **argv) {
+#define NTESTS 500
+
     ProjectivePoint p;
     AffinePoint result, expected;
 
-    // initialize P
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
+    for (int i = 0; i < NTESTS; i++) {
+        p = randomPoint();
+        expected = c_normalize(&p);
+
+        ecc_normalize(&result, &p);
+
+        if (eq_affine(&result, &expected)) {
+            printf("ECC Normalize: %d/%d: %s\n", i + 1, NTESTS, "OK");
+        } else {
+            printf("ECC Normalize: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            return EXIT_FAILURE;
+        }
     }
 
-    expected = c_normalize(&p);
-    printf("Expected:\n");
-    print_affine(&expected);
+#undef NTESTS
 
-    ecc_normalize(&result, &p);
-    printf("Result:\n");
-    print_affine(&result);
-
-    if (eq_affine(&result, &expected)) {
-        printf("Equal\n");
-    } else {
-        printf("Not Equal\n");
-    }
-
-    return eq_affine(&result, &expected) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

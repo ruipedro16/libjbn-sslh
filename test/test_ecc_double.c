@@ -55,6 +55,18 @@ bool eq_projective(const ProjectivePoint *p, const ProjectivePoint *q) {
     return true;
 }
 
+ProjectivePoint randomPoint() {
+    ProjectivePoint point;
+
+    for (size_t i = 0; i < NLIMBS; i++) {
+        point.x[i] = (uint64_t)rand();  // Generate random 64-bit value for x
+        point.y[i] = (uint64_t)rand();  // Generate random 64-bit value for y
+        point.z[i] = (uint64_t)rand();  // Generate random 64-bit value for z
+    }
+
+    return point;
+}
+
 ProjectivePoint c_double(const ProjectivePoint *p) {
     ProjectivePoint res;
 
@@ -162,46 +174,27 @@ ProjectivePoint c_double(const ProjectivePoint *p) {
     return res;
 }
 
-//
-
-/*
- * jasminc ../src/ecc/amd64/ref/ecc_generic_export.jinc -o ecc.s
- * jasminc ../src/fp/amd64/ref/fp_generic_export.jinc -o fp.s
- * gcc test_ecc_double.c *.s -o double.o
- * ./double.o || echo "failed"
- */
 int main(int argc, const char **argv) {
+#define NTESTS 500
+
     ProjectivePoint p, result, expected;
 
-    // initialize P & Q
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
+    for (int i = 0; i < NTESTS; i++) {
+        p = randomPoint();
+
+        expected = c_double(&p);
+
+        ecc_double(&result, &p);
+
+        if (eq_projective(&result, &expected)) {
+            printf("ECC Double: %d/%d: %s\n", i + 1, NTESTS, "OK");
+        } else {
+            printf("ECC Double: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            return EXIT_FAILURE;
+        }
     }
 
-    expected = c_double(&p);
+#undef NTESTS
 
-    printf("Expected:\n");
-    print_projective(&expected);
-
-    // reset P
-    for (size_t i = 0; i < NLIMBS; i++) {
-        p.x[i] = i;
-        p.y[i] = i + 1;
-        p.z[i] = i + 2;
-    }
-
-    ecc_double(&result, &p);
-
-    printf("Result:\n");
-    print_projective(&result);
-
-    if (eq_projective(&result, &expected)) {
-        printf("Equal\n");
-    } else {
-        printf("Not Equal\n");
-    }
-
-    return eq_projective(&expected, &result) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

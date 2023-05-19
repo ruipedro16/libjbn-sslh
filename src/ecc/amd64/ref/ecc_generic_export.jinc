@@ -22,14 +22,13 @@ export fn ecc_add(#transient reg u64 r p q) {
     #secret stack u64[NLIMBS] x1 y1 z1;  
     #secret stack u64[NLIMBS] x2 y2 z2;
     #secret stack u64[NLIMBS] x3 y3 z3;
-    #public stack u64 sr sp sq;
 
     ms = #init_msf();
 
-    x1, y2, z1 = __load_projective_point(p); 
+    x1, y1, z1 = __load_projective_point(p); 
     x2, y2, z2 = __load_projective_point(q);
 
-    x3, y3, z3 = _ecc_add(x1, y2, z1, x2, y2, z2, x3, y3, z3);
+    x3, y3, z3 = _ecc_add(x1, y1, z1, x2, y2, z2, x3, y3, z3);
 
     __store_projective_point(r, x3, y3, z3);
 }
