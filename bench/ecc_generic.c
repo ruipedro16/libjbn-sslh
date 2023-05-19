@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 7
+#define NLIMBS 4
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -44,6 +44,15 @@ int main(void) {
     AffinePoint ap;
     ProjectivePoint p1, p2, p3;
     uint64_t scalar[NLIMBS];
+
+    // warmup
+    for (int i = 0; i < 10; i++) {
+        ecc_normalize(&p1, &ap);
+        ecc_double(&p1, &p2);
+        ecc_add(&p1, &p2, &p3);
+        ecc_mixed_add(&p1, &p2, &p3);
+        ecc_scalar_mul(&p1, &p2, scalar);
+    }
 
     for (loop = 0, op = 0; loop < LOOPS; loop++, op = 0) {
         // ecc_normalize

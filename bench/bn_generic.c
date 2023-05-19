@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 7
+#define NLIMBS 4
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -35,6 +35,18 @@ int main(void) {
     uint64_t results[OP][LOOPS];
 
     uint64_t a[NLIMBS * 2], b[NLIMBS * 2], c[NLIMBS * 2];
+
+    // warmup
+    for (int i = 0; i < 10; i++) {
+        bn_eq(a, b);
+        bn_test0(a);
+        bn_copy(a, b);
+        bn_set0(a);
+        bn_addn(a, b, c);
+        bn_subn(a, b, c);
+        bn_muln(a, b, c);
+        bn_sqrn(a, b);
+    }
 
     for (loop = 0, op = 0; loop < LOOPS; loop++, op = 0) {
         // bn_eq
