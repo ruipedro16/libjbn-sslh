@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 6
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -30,30 +30,13 @@ extern void ecc_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p, const u
 #include "cpucycles.c"
 #include "printbench.h"
 
-#define LOOPS 5
-#define TIMINGS 4096
+#define TIMINGS 10000
 #define OP 5
 
-void write_values(uint64_t values[OP][LOOPS][TIMINGS], uint64_t results[OP][LOOPS],
-                  char *op_str[OP]) {
-    int op, loop;
+void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
+    int op;
     uint64_t min;
     FILE *f;
-    uint64_t loop_used[OP];
-
-    // choose the loop whose values will be used
-    // We choose the one whose median is smaller
-    for (op = 0; op < OP; op++) {
-        min = results[op][0];
-        loop_used[op] = 1;
-        for (loop = 1; loop < LOOPS; loop++) {
-            if (min > results[op][loop]) {
-                min = results[op][loop];
-                loop_used[op] = loop;
-            }
-        }
-        results[op][0] = min;
-    }
 
     const char filename_preffix[] = "values_";
 
@@ -65,10 +48,13 @@ void write_values(uint64_t values[OP][LOOPS][TIMINGS], uint64_t results[OP][LOOP
 
         f = fopen(filename, "w");
 
+        for (size_t i = 0; i < TIMINGS - 1; i++) {
+            values[op][i] = values[op][i + 1] - values[op][i];
+        }
+
         // Write the values
-        for (size_t i = 0; i < TIMINGS; i++) {
-            size_t loop_index = loop_used[op];
-            fprintf(f, "%" PRIu64 "\n", values[op][loop_index][i]);
+        for (size_t i = 0; i < TIMINGS - 1; i++) {
+            fprintf(f, "%" PRIu64 "\n", values[op][i]);
         }
 
         fclose(f);
@@ -83,8 +69,8 @@ int main(void) {
     char *op_str[OP] = {xstr(ecc_normalize, .csv), xstr(ecc_double, .csv), xstr(ecc_add, .csv),
                         xstr(ecc_mixed_add, .csv), xstr(ecc_scalar_mul, .csv)};
     uint64_t cycles[TIMINGS];
-    uint64_t results[OP][LOOPS];          // only contains the median
-    uint64_t values[OP][LOOPS][TIMINGS];  // contains all the measurements
+    uint64_t results[OP];          // only contains the median
+    uint64_t values[OP][TIMINGS];  // contains all the measurements
 
     AffinePoint ap;
     ProjectivePoint p1, p2, p3;
@@ -99,47 +85,46 @@ int main(void) {
         ecc_scalar_mul(&p1, &p2, scalar);
     }
 
-    for (loop = 0, op = 0; loop < LOOPS; loop++, op = 0) {
-        // ecc_normalize
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            ecc_normalize(&p1, &ap);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // ecc_double
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            ecc_double(&p1, &p2);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // ecc_add
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            ecc_add(&p3, &p1, &p2);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // ecc_mixed_add
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            ecc_mixed_add(&p3, &p1, &p2);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // ecc_scalar_mul
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            ecc_scalar_mul(&p1, &p2, scalar);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
+    op = 0;
+    // ecc_normalize
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_normalize(&p1, &ap);
     }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // ecc_double
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_double(&p1, &p2);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // ecc_add
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_add(&p3, &p1, &p2);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // ecc_mixed_add
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_mixed_add(&p3, &p1, &p2);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // ecc_scalar_mul
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_scalar_mul(&p1, &p2, scalar);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
 
     cpucycles_fprintf_2(results, op_str);
     write_values(values, results, op_str);

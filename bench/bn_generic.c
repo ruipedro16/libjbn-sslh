@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 6
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -22,30 +22,13 @@ extern void bn_sqrn(uint64_t *, uint64_t *);
 #include "cpucycles.c"
 #include "printbench.h"
 
-#define LOOPS 5
-#define TIMINGS 4096
+#define TIMINGS 10000
 #define OP 8
 
-void write_values(uint64_t values[OP][LOOPS][TIMINGS], uint64_t results[OP][LOOPS],
-                  char *op_str[OP]) {
-    int op, loop;
+void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
+    int op;
     uint64_t min;
     FILE *f;
-    uint64_t loop_used[OP];
-
-    // choose the loop whose values will be used
-    // We choose the one whose median is smaller
-    for (op = 0; op < OP; op++) {
-        min = results[op][0];
-        loop_used[op] = 1;
-        for (loop = 1; loop < LOOPS; loop++) {
-            if (min > results[op][loop]) {
-                min = results[op][loop];
-                loop_used[op] = loop;
-            }
-        }
-        results[op][0] = min;
-    }
 
     const char filename_preffix[] = "values_";
 
@@ -57,10 +40,13 @@ void write_values(uint64_t values[OP][LOOPS][TIMINGS], uint64_t results[OP][LOOP
 
         f = fopen(filename, "w");
 
+        for (size_t i = 0; i < TIMINGS - 1; i++) {
+            values[op][i] = values[op][i + 1] - values[op][i];
+        }
+
         // Write the values
-        for (size_t i = 0; i < TIMINGS; i++) {
-            size_t loop_index = loop_used[op];
-            fprintf(f, "%" PRIu64 "\n", values[op][loop_index][i]);
+        for (size_t i = 0; i < TIMINGS - 1; i++) {
+            fprintf(f, "%" PRIu64 "\n", values[op][i]);
         }
 
         fclose(f);
@@ -76,8 +62,8 @@ int main(void) {
                         xstr(bn_set0, .csv), xstr(bn_addn, .csv),  xstr(bn_subn, .csv),
                         xstr(bn_muln, .csv), xstr(bn_sqrn, .csv)};
     uint64_t cycles[TIMINGS];
-    uint64_t results[OP][LOOPS];          // only contains the median
-    uint64_t values[OP][LOOPS][TIMINGS];  // contains all the measurements
+    uint64_t results[OP];          // only contains the median
+    uint64_t values[OP][TIMINGS];  // contains all the measurements
 
     uint64_t a[NLIMBS * 2], b[NLIMBS * 2], c[NLIMBS * 2];
 
@@ -93,71 +79,70 @@ int main(void) {
         bn_sqrn(a, b);
     }
 
-    for (loop = 0, op = 0; loop < LOOPS; loop++, op = 0) {
-        // bn_eq
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_eq(a, b);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_test0
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_test0(a);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_copy
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_copy(a, b);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_set0
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_set0(a);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_addn
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_addn(a, b, c);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_subn
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_subn(a, b, c);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_muln
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_muln(a, b, c);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
-
-        // bn_sqrn
-        for (i = 0; i < TIMINGS; i++) {
-            cycles[i] = cpucycles();
-            bn_sqrn(a, b);
-        }
-        memcpy(values[op][loop], cycles, sizeof(cycles));
-        results[op++][loop] = cpucycles_median(cycles, TIMINGS);
+    op = 0;
+    // bn_eq
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_eq(a, b);
     }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_test0
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_test0(a);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_copy
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_copy(a, b);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_set0
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_set0(a);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_addn
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_addn(a, b, c);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_subn
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_subn(a, b, c);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_muln
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_muln(a, b, c);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // bn_sqrn
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        bn_sqrn(a, b);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
 
     cpucycles_fprintf_2(results, op_str);
     write_values(values, results, op_str);
