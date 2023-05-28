@@ -40,18 +40,6 @@ inline fn __ecc_copy(reg const ptr u64[NLIMBS] px py pz,
     return qx, qy, qz;
 }
 
-inline fn __load_affine_point(#public reg u64 addr) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
-    #secret stack u64[2 * NLIMBS] tmp;
-    reg ptr u64[2 * NLIMBS] _tmp;
-    #secret stack u64[NLIMBS] x y;
-    
-    tmp = _bn2_load_(addr);
-    _tmp = tmp;
-    x, y = __bn2_unpack(_tmp);
-
-    return x, y;
-}
-
 inline fn __store_affine_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y) {
     #secret stack u64[2 * NLIMBS] tmp;
     reg ptr u64[2 * NLIMBS] _tmp;

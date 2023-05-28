@@ -1,1 +1,1 @@
-param int NLIMBS = 10;
+param int NLIMBS = 2;

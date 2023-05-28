@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 7
+#define NLIMBS 11
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -30,7 +30,7 @@ extern void ecc_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p, const u
 #include "cpucycles.c"
 #include "printbench.h"
 
-#define TIMINGS 10000
+#define TIMINGS 100000
 #define OP 5
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {

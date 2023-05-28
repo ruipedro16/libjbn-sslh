@@ -1,9 +1,4 @@
 u64[NLIMBS] glob_b = {
     0x5289a0cf641d011f,
-    0x9b88257189fed2b9,
-    0xa3b365d58dc8f17a,
-    0x5bc57ab6eff168ec,
-    0x9e51998bd84d4423,
-    0xbf8999cbac3b5695,
-    0x003f6cfce8b81771
+    0x9b88257189fed2b9
 };
