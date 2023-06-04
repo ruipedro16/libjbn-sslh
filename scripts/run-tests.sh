@@ -34,7 +34,7 @@ cd $ECC_DIR || exit 1
 jasminc -checkSCT ecc_generic_export.jinc 2> /dev/null || (echo "NOT SCT" ; exit 2)
 
 rm -f *.s # same as make clean
-(make > /dev/null 2>&1 && echo "Compiled Ecc") || (echo "Ecc compilation failed" ; exit 3)
+(make > /dev/null 2>&1 && echo -e "Compiled Ecc\n") || (echo "Ecc compilation failed" ; exit 3)
 mv *.s $TEST_DIR
 
 cd $TEST_DIR || exit 1
@@ -50,6 +50,10 @@ gcc test_ecc_double.c *.s -o double.o
 # Test Scalar Mul
 gcc test_ecc_scalar_mult.c *.s -o scalar_mul.o
 (./scalar_mul.o > /dev/null 2>&1 && echo "Scalar Mult works" ) || (echo "\033[31mScalar Mult failed\033[0m" ; exit 4)
+
+# Test Branchless Scalar Mul
+gcc test_ecc_scalar_mult_branchless.c *.s -o scalar_mult_branchless.o
+(./scalar_mult_branchless.o > /dev/null 2>&1 && echo "Branchless Scalar Mult works" ) || (echo "\033[31mScalar Mult failed\033[0m" ; exit 4)
 
 # Test Mixed Add
 gcc test_ecc_mixed_add.c *.s -o mixed_add.o

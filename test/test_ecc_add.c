@@ -213,9 +213,8 @@ int main(int argc, const char **argv) {
         p = randomPoint();
         q = randomPoint();
 
-
         expected = c_add(&p, &q);
-        
+
         ecc_add(&result, &p, &q);
 
         if (eq_projective(&result, &expected)) {

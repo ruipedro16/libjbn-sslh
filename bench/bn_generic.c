@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 11
+#define NLIMBS 8
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -22,7 +22,7 @@ extern void bn_sqrn(uint64_t *, uint64_t *);
 #include "cpucycles.c"
 #include "printbench.h"
 
-#define TIMINGS 100000
+#define TIMINGS 10000
 #define OP 8
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
@@ -57,7 +57,7 @@ void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_s
 }
 
 int main(void) {
-    int loop, i, op;
+    int i, op;
     char *op_str[OP] = {xstr(bn_eq, .csv),   xstr(bn_test0, .csv), xstr(bn_copy, .csv),
                         xstr(bn_set0, .csv), xstr(bn_addn, .csv),  xstr(bn_subn, .csv),
                         xstr(bn_muln, .csv), xstr(bn_sqrn, .csv)};

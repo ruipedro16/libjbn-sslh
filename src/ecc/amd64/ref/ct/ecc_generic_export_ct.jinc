@@ -77,3 +77,19 @@ export fn ecc_mixed_add(#transient reg u64 r p q) {
 
     __store_projective_point(r, x3, y3, z3);
 }
+
+export fn ecc_branchless_scalar_mul(#transient reg u64 q p k) {
+    #secret stack u64[NLIMBS] scalar; 
+    #secret stack u64[NLIMBS] qx qy qz;
+    #secret stack u64[NLIMBS] px py pz; // R1
+
+    #public stack u64 sp sk sq;
+
+    scalar = __bn_load(k);
+    
+    px, py, pz = __load_projective_point(p); 
+
+    qx, qy, qz = _ecc_scalar_mul(scalar, qx, qy, qz, px, py, pz);
+
+    __store_projective_point(q, qx, qy, qz);
+}

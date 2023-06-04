@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 11
+#define NLIMBS 8
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -26,12 +26,14 @@ extern void ecc_double(const ProjectivePoint *p, ProjectivePoint *q);
 extern void ecc_add(ProjectivePoint *r, const ProjectivePoint *p, const ProjectivePoint *q);
 extern void ecc_mixed_add(ProjectivePoint *r, const ProjectivePoint *p, const ProjectivePoint *q);
 extern void ecc_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p, const uint64_t *scalar);
+extern void ecc_branchless_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p,
+                                      const uint64_t *scalar);
 
 #include "cpucycles.c"
 #include "printbench.h"
 
-#define TIMINGS 100000
-#define OP 5
+#define TIMINGS 10000
+#define OP 6
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
     int op;
@@ -66,8 +68,9 @@ void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_s
 
 int main(void) {
     int loop, i, op;
-    char *op_str[OP] = {xstr(ecc_normalize, .csv), xstr(ecc_double, .csv), xstr(ecc_add, .csv),
-                        xstr(ecc_mixed_add, .csv), xstr(ecc_scalar_mul, .csv)};
+    char *op_str[OP] = {xstr(ecc_normalize, .csv),  xstr(ecc_double, .csv),
+                        xstr(ecc_add, .csv),        xstr(ecc_mixed_add, .csv),
+                        xstr(ecc_scalar_mul, .csv), xstr(ecc_branchless_scalar_mul, .csv)};
     uint64_t cycles[TIMINGS];
     uint64_t results[OP];          // only contains the median
     uint64_t values[OP][TIMINGS];  // contains all the measurements
@@ -83,6 +86,7 @@ int main(void) {
         ecc_add(&p1, &p2, &p3);
         ecc_mixed_add(&p1, &p2, &p3);
         ecc_scalar_mul(&p1, &p2, scalar);
+        ecc_branchless_scalar_mul(&p1, &p2, scalar);
     }
 
     op = 0;
@@ -122,6 +126,15 @@ int main(void) {
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         ecc_scalar_mul(&p1, &p2, scalar);
+    }
+    memcpy(values[op], cycles, sizeof(cycles));
+    results[op++] = cpucycles_median(cycles, TIMINGS);
+
+    // branchless scalar multiplication
+    // ecc_scalar_mul
+    for (i = 0; i < TIMINGS; i++) {
+        cycles[i] = cpucycles();
+        ecc_branchless_scalar_mul(&p1, &p2, scalar);
     }
     memcpy(values[op], cycles, sizeof(cycles));
     results[op++] = cpucycles_median(cycles, TIMINGS);

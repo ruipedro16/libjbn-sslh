@@ -16,8 +16,8 @@ extern void fp_add(uint64_t *r, const uint64_t *a, const uint64_t *b);
 extern void fp_sub(uint64_t *r, const uint64_t *a, const uint64_t *b);
 extern void fp_mul(uint64_t *r, const uint64_t *a, const uint64_t *b);
 extern void fp_sqr(uint64_t *r, const uint64_t *a);
-
-extern void ecc_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p, const uint64_t *scalar);
+extern void ecc_branchless_scalar_mul(ProjectivePoint *r, const ProjectivePoint *p,
+                                      const uint64_t *scalar);
 
 uint64_t B[NLIMBS] = {0x5289a0cf641d011f, 0x9b88257189fed2b9, 0xa3b365d58dc8f17a,
                       0x5bc57ab6eff168ec, 0x9e51998bd84d4423, 0xbf8999cbac3b5695,
@@ -398,12 +398,12 @@ int main(int argc, const char **argv) {
 
         expected = c_scalar_mult(t, &p);
 
-        ecc_scalar_mul(&result, &p, t);
+        ecc_branchless_scalar_mul(&result, &p, t);
 
         if (eq_projective(&result, &expected)) {
-            printf("ECC Scalar Mul: %d/%d: %s\n", i + 1, NTESTS, "OK");
+            printf("ECC Branchless Scalar Mul: %d/%d: %s\n", i + 1, NTESTS, "OK");
         } else {
-            printf("ECC Scalar Mul: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
+            printf("ECC Branchless Scalar Mul: %d/%d: %s\n", i + 1, NTESTS, "NOT OK");
             return EXIT_FAILURE;
         }
     }

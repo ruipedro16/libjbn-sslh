@@ -36,7 +36,7 @@ export fn ecc_add(#transient reg u64 r p q) {
 export fn ecc_scalar_mul(#transient reg u64 q p k) {
     #msf reg u64 ms;
 
-    #public stack u64[NLIMBS] scalar; 
+    #secret stack u64[NLIMBS] scalar; 
     #secret stack u64[NLIMBS] qx qy qz;
     #secret stack u64[NLIMBS] px py pz; // R1
 
@@ -44,7 +44,7 @@ export fn ecc_scalar_mul(#transient reg u64 q p k) {
 
     ms = #init_msf();
 
-    #declassify scalar = __bn_load(k);
+    scalar = __bn_load(k);
     
     px, py, pz = __load_projective_point(p); 
 
@@ -96,4 +96,24 @@ export fn ecc_mixed_add(#transient reg u64 r p q) {
     x3, y3, z3 = __ecc_mixed_add(x1, y1, z1, x2, y2);
 
     __store_projective_point(r, x3, y3, z3);
+}
+
+export fn ecc_branchless_scalar_mul(#transient reg u64 q p k) {
+    #msf reg u64 ms;
+
+    #secret stack u64[NLIMBS] scalar; 
+    #secret stack u64[NLIMBS] qx qy qz;
+    #secret stack u64[NLIMBS] px py pz; // R1
+
+    #public stack u64 sp sk sq;
+
+    ms = #init_msf();
+
+    scalar = __bn_load(k);
+    
+    px, py, pz = __load_projective_point(p); 
+
+    qx, qy, qz, ms = _ecc_scalar_mul(scalar, qx, qy, qz, px, py, pz, ms);
+
+    __store_projective_point(q, qx, qy, qz);
 }

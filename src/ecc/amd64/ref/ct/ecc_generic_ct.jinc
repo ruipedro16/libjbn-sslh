@@ -49,6 +49,31 @@ inline fn __store_affine_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y) {
     __bn2_store(addr, _tmp);
 }
 
+inline fn __conditional_mv_point(#secret reg bool cond,
+                                 reg ptr u64[NLIMBS] src_x src_y src_z
+                                                             dest_x dest_y dest_z)
+                              -> reg ptr u64[NLIMBS], reg ptr u64[NLIMBS],
+                                 reg ptr u64[NLIMBS] {
+    inline int i;
+    #secret reg u64 t;
+
+    for i = 0 to NLIMBS {
+        // X
+        t = src_x[i];
+        dest_x[i] = t if cond; // BRANCHLESS!
+
+        // Y
+        t = src_y[i];
+        dest_y[i] = t if cond; // BRANCHLESS!
+
+        // Z
+        t = src_z[i];
+        dest_z[i] = t if cond; // BRANCHLESS!
+    }
+
+    return dest_x, dest_y, dest_z;
+}
+
 inline fn __load_projective_point(#public reg u64 addr) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
     #secret stack u64[NLIMBS] x y z;
     inline int i;
@@ -434,6 +459,76 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar
                 r0x, r0y, r0z = __ecc_copy(tmpx, tmpy, tmpz, r0x, r0y, r0z);
             }
             
+            k = sk;
+            k -= 1;
+        }
+    }
+
+    return r0x, r0y, r0z;
+}
+
+inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
+                                       r0x r0y r0z
+                                       r1x r1y r1z // P
+                          )
+                       -> #secret stack u64[NLIMBS], 
+                          #secret stack u64[NLIMBS], 
+                          #secret stack u64[NLIMBS] {
+
+    inline int i; // to iterate over the limbs of a BN
+    #public reg u64 k; stack u64 sk; // to iterate over the bits of a limb
+    #public reg u64 t; stack u64 st; // current limb
+
+    reg bool cond cf;
+
+    #secret stack u64[NLIMBS] tmpx tmpy tmpz;
+    #secret stack u64[NLIMBS] doubleR0x doubleR0y doubleR0z;
+    #secret stack u64[NLIMBS] doubleR1x doubleR1y doubleR1z;
+
+    // R0 ← 0
+    // Point at infinity = (0 : 1 : 0)
+    for i = 0 to NLIMBS {
+        t = glob_oneM[i];
+        r0x[i] = 0;
+        r0y[i] = t;
+        r0z[i] = 0;
+    }
+
+    // R1 ← P // already set
+
+    for i = 0 to NLIMBS {
+        t = scalar[(int) i];
+
+        k = 64;
+        while { cond = (k > 0); } (cond) {
+            sk = k; // spill k
+
+            _, cf, _, _, _, t = #SHR(t, 1);
+            st = t; // spill limb
+
+            // TMP HOLDS THE RESULT R0 + R1
+            tmpx, tmpy, tmpz = _ecc_add(r0x, r0y, r0z, r1x, r1y, r1z, tmpx, tmpy, tmpz);
+
+            // value of 2 . R1
+            doubleR1x, doubleR1y, doubleR1z = _ecc_double(r1x, r1y, r1z, doubleR1x, doubleR1y, doubleR1z); 
+
+            // value of 2 . R0
+            doubleR0x, doubleR0y, doubleR0z = _ecc_double(r0x, r0y, r0z, doubleR0x, doubleR0y, doubleR0z);
+
+            // if cf: 
+
+            //  R0 ← R0 + R1
+            r0x, r0y, r0z = __conditional_mv_point(cf, tmpx, tmpy, tmpz, r0x, r0y, r0z);
+            //  R1 ← 2 . R1
+            r1x, r1y, r1z = __conditional_mv_point(cf, doubleR1x, doubleR1y, doubleR1z, r1x, r1y, r1z);
+            
+            // else
+
+            // R1 ← R0 + R1
+            r1x, r1y, r1z = __conditional_mv_point(cf, tmpx, tmpy, tmpz, r1x, r1y, r1z);
+            // R0 ← 2 . R0
+            r0x, r0y, r0z = __conditional_mv_point(!cf, doubleR0x, doubleR0y, doubleR0z, r0x, r0y, r0z);
+
             k = sk;
             k -= 1;
         }
