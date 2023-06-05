@@ -4,4 +4,4 @@ all: ecc_generic_export_ct.s
 	jasminc $< -nowarning -o $@
 
 clean:
-	rm -f ecc_generic_export.s
+	rm -f ecc_generic_export_ct.s

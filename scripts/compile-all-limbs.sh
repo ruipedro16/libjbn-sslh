@@ -62,18 +62,18 @@ for i in $(seq $MIN_LIMBS $MAX_LIMBS); do
     if [[ $i -gt 13 ]]; then # if NLIMBS > 13, ECC doesnt compile (Fatal error: exception Stack overflow)
         echo -e "Skiping ECC\n"
     else
-        cd $ECC_DIR && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 && mv *.s $ASM_DIR/$i/sct ; echo "ECC SCT compiled"
-        cd $ECC_DIR/ct && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 && mv *.s $ASM_DIR/$i/ct ; echo -e "ECC CT compiled\n"
+        cd $ECC_DIR && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 ; mv *.s $ASM_DIR/$i/sct ; echo "ECC SCT compiled"        
+        cd $ECC_DIR/ct && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 ; mv *.s $ASM_DIR/$i/sct ; echo -e "ECC CT compiled\n"
     fi
     
 done
 
-# Restore parameters for NLIMBS = 7
-cp $PARAM_DIR/7/bn_param.jinc $BN_DIR
-cp $PARAM_DIR/7/bn_param.jinc $BN_DIR/ct
+# Restore parameters for NLIMBS = 4
+cp $PARAM_DIR/4/bn_param.jinc $BN_DIR
+cp $PARAM_DIR/4/bn_param.jinc $BN_DIR/ct
 
-cp $PARAM_DIR/7/fp_param.jinc $FP_DIR
-cp $PARAM_DIR/7/fp_param.jinc $FP_DIR/ct
+cp $PARAM_DIR/4/fp_param.jinc $FP_DIR
+cp $PARAM_DIR/4/fp_param.jinc $FP_DIR/ct
 
-cp $PARAM_DIR/7/ecc_param.jinc $ECC_DIR
-cp $PARAM_DIR/7/ecc_param.jinc $ECC_DIR/ct
+cp $PARAM_DIR/4/ecc_param.jinc $ECC_DIR
+cp $PARAM_DIR/4/ecc_param.jinc $ECC_DIR/ct

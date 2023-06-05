@@ -113,7 +113,9 @@ export fn ecc_branchless_scalar_mul(#transient reg u64 q p k) {
     
     px, py, pz = __load_projective_point(p); 
 
-    qx, qy, qz, ms = _ecc_scalar_mul(scalar, qx, qy, qz, px, py, pz, ms);
+    sk = k; sp = p;
+
+    qx, qy, qz, ms = _ecc_branchless_scalar_mul(scalar, qx, qy, qz, px, py, pz, ms);
 
     __store_projective_point(q, qx, qy, qz);
 }

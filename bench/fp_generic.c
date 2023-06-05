@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 8
+#define NLIMBS 1
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates

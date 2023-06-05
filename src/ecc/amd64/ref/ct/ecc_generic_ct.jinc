@@ -40,6 +40,18 @@ inline fn __ecc_copy(reg const ptr u64[NLIMBS] px py pz,
     return qx, qy, qz;
 }
 
+inline fn __conditional_mv_point(#secret reg bool cond,
+                                  reg const ptr u64[NLIMBS] src_x src_y src_z,
+                                  reg mut ptr u64[NLIMBS] dest_x dest_y dest_z)
+                               -> reg ptr u64[NLIMBS], reg ptr u64[NLIMBS],
+                                  reg ptr u64[NLIMBS] {
+    dest_x = __bn_cmov(cond, dest_x, src_x);
+    dest_y = __bn_cmov(cond, dest_y, src_y);
+    dest_z = __bn_cmov(cond, dest_z, src_z);
+ 
+    return dest_x, dest_y, dest_z;
+}
+
 inline fn __store_affine_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y) {
     #secret stack u64[2 * NLIMBS] tmp;
     reg ptr u64[2 * NLIMBS] _tmp;
@@ -47,31 +59,6 @@ inline fn __store_affine_point(#public reg u64 addr, reg ptr u64[NLIMBS] x y) {
     tmp = __bn_pack2(x, y);
     _tmp = tmp;
     __bn2_store(addr, _tmp);
-}
-
-inline fn __conditional_mv_point(#secret reg bool cond,
-                                 reg ptr u64[NLIMBS] src_x src_y src_z
-                                                             dest_x dest_y dest_z)
-                              -> reg ptr u64[NLIMBS], reg ptr u64[NLIMBS],
-                                 reg ptr u64[NLIMBS] {
-    inline int i;
-    #secret reg u64 t;
-
-    for i = 0 to NLIMBS {
-        // X
-        t = src_x[i];
-        dest_x[i] = t if cond; // BRANCHLESS!
-
-        // Y
-        t = src_y[i];
-        dest_y[i] = t if cond; // BRANCHLESS!
-
-        // Z
-        t = src_z[i];
-        dest_z[i] = t if cond; // BRANCHLESS!
-    }
-
-    return dest_x, dest_y, dest_z;
 }
 
 inline fn __load_projective_point(#public reg u64 addr) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
@@ -405,9 +392,9 @@ inline fn _ecc_add(#secret stack u64[NLIMBS] x1 y1 z1 x2 y2 z2 x3 y3 z3)
     return x3, y3, z3;
 }
 
-inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar
-                                       r0x r0y r0z
-                                       r1x r1y r1z)
+inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar,
+                          #secret stack u64[NLIMBS] r0x r0y r0z
+                                                    r1x r1y r1z)
                        -> #secret stack u64[NLIMBS], 
                           #secret stack u64[NLIMBS], 
                           #secret stack u64[NLIMBS] {
@@ -432,13 +419,16 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar
     // R1 ← P // already set
 
     for i = 0 to NLIMBS {
+        t = scalar[(int) i];
 
         k = 64;
         while { cond = (k > 0); } (cond) {
             sk = k; // spill k
 
+            
             _, cf, _, _, _, t = #SHR(t, 1);
             st = t; // spill limb
+
             if (cf) {
 
                 // R0 ← R0 + R1
@@ -469,11 +459,10 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar
 
 inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
                                        r0x r0y r0z
-                                       r1x r1y r1z // P
-                          )
+                                       r1x r1y r1z)
                        -> #secret stack u64[NLIMBS], 
                           #secret stack u64[NLIMBS], 
-                          #secret stack u64[NLIMBS] {
+                          #secret stack u64[NLIMBS]{
 
     inline int i; // to iterate over the limbs of a BN
     #public reg u64 k; stack u64 sk; // to iterate over the bits of a limb
@@ -502,8 +491,6 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
         k = 64;
         while { cond = (k > 0); } (cond) {
             sk = k; // spill k
-
-            _, cf, _, _, _, t = #SHR(t, 1);
             st = t; // spill limb
 
             // TMP HOLDS THE RESULT R0 + R1
@@ -515,20 +502,21 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
             // value of 2 . R0
             doubleR0x, doubleR0y, doubleR0z = _ecc_double(r0x, r0y, r0z, doubleR0x, doubleR0y, doubleR0z);
 
-            // if cf: 
+            t = st;
+            _, cf, _, _, _, t = #SHR(t, 1); // we only shift t here because previous instruction change the value of the cf
 
+            // if !cf:
+            // R1 ← R0 + R1
+            r1x, r1y, r1z = __ecc_copy(tmpx, tmpy, tmpz, r1x, r1y, r1z);
+            // R0 ← 2 . R0
+            r0x, r0y, r0z = __ecc_copy(doubleR0x, doubleR0y, doubleR0z, r0x, r0y, r0z);
+
+            // if cf: 
             //  R0 ← R0 + R1
             r0x, r0y, r0z = __conditional_mv_point(cf, tmpx, tmpy, tmpz, r0x, r0y, r0z);
             //  R1 ← 2 . R1
             r1x, r1y, r1z = __conditional_mv_point(cf, doubleR1x, doubleR1y, doubleR1z, r1x, r1y, r1z);
             
-            // else
-
-            // R1 ← R0 + R1
-            r1x, r1y, r1z = __conditional_mv_point(cf, tmpx, tmpy, tmpz, r1x, r1y, r1z);
-            // R0 ← 2 . R0
-            r0x, r0y, r0z = __conditional_mv_point(!cf, doubleR0x, doubleR0y, doubleR0z, r0x, r0y, r0z);
-
             k = sk;
             k -= 1;
         }
@@ -537,10 +525,11 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
     return r0x, r0y, r0z;
 }
 
-inline fn __ecc_normalize(#secret stack u64[NLIMBS] px py pz) -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
+inline fn __ecc_normalize(#secret stack u64[NLIMBS] px py pz)
+                       -> #secret stack u64[NLIMBS], #secret stack u64[NLIMBS] {
     #secret stack u64[NLIMBS] z_inv _xa _ya;
      
-    z_inv = __fp_inv(pz, z_inv);
+    z_inv = __fp_inv(pz, z_inv); // compute the multiplicative inverse of z 
     
     _xa = _fp_mul(px, z_inv, _xa);
     

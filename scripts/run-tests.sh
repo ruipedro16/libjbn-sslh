@@ -53,7 +53,7 @@ gcc test_ecc_scalar_mult.c *.s -o scalar_mul.o
 
 # Test Branchless Scalar Mul
 gcc test_ecc_scalar_mult_branchless.c *.s -o scalar_mult_branchless.o
-(./scalar_mult_branchless.o > /dev/null 2>&1 && echo "Branchless Scalar Mult works" ) || (echo "\033[31mScalar Mult failed\033[0m" ; exit 4)
+(./scalar_mult_branchless.o > /dev/null 2>&1 && echo "Branchless Scalar Mult works" ) || (echo "\033[31mBranchless Scalar Mult failed\033[0m" ; exit 4)
 
 # Test Mixed Add
 gcc test_ecc_mixed_add.c *.s -o mixed_add.o
