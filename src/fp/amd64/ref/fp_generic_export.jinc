@@ -89,7 +89,6 @@ export fn fp_expm_noct(#transient reg u64 rp ap bp) {
     
     rp = _rp; // load from the stack
     rp = #protect(rp, ms);
-    r = #protect_ptr(r, ms);
 
     __bn_store(rp, r);
 }
@@ -115,7 +114,7 @@ export fn fp_inv(#transient reg u64 rp ap) {
 
     rp = _rp; // load from the stack
     rp = #protect(rp, ms);
-    r = #protect_ptr(r, ms);
+
     __bn_store(rp, r);
 }
 

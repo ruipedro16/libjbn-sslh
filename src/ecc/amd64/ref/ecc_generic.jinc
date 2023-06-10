@@ -478,7 +478,8 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
     #public reg u64 k; stack u64 sk; // to iterate over the bits of a limb
     #public reg u64 t; stack u64 st; // current limb
 
-    reg bool cond cf;
+    #public reg bool cond;
+    #secret reg bool cf;
 
     #secret stack u64[NLIMBS] tmpx tmpy tmpz;
     #secret stack u64[NLIMBS] doubleR0x doubleR0y doubleR0z;
@@ -496,9 +497,6 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
     // R1 ← P // already set
 
     for i = 0 to NLIMBS {
-        t = scalar[(int) i];
-        t = #protect(t, ms);
-
         k = 64;
         while { cond = (k > 0); } (cond) {
             ms = #set_msf(cond, ms);
@@ -514,7 +512,7 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
             // value of 2 . R0
             doubleR0x, doubleR0y, doubleR0z = _ecc_double(r0x, r0y, r0z, doubleR0x, doubleR0y, doubleR0z);
 
-            t = st;
+            t = scalar[(int) i];
             t = #protect(t, ms);
             _, cf, _, _, _, t = #SHR(t, 1); // we only shift t here because previous instruction change the value of the cf
 

@@ -252,6 +252,8 @@ fn _fp_exp(reg ptr u64[NLIMBS] a _b r,
     }
 
     r = rr;
+    r = #protect_ptr(r, ms);
+    
     return r, ms;
 }
 
