@@ -12,7 +12,7 @@ number of limbs between `$1` and `$2`.
 folder specified in `$1`. For 7 limbs, compilation takes approx. 2 minutes
 
 - [run-bench.sh](scripts/run-bench.sh): Script to generate benchmark results (for NLIMBS
-in [1, 10]). Results are stored in the `data` directory.
+in [1, 12]). Results are stored in the `data` directory.
 
 - [run-tests.sh](scripts/run-tests.sh): Script to make sure that the Jasmin implementation
 outputs correct results (for 7 limbs only)
