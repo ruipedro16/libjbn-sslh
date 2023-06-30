@@ -63,7 +63,7 @@ for i in $(seq $MIN_LIMBS $MAX_LIMBS); do
         echo -e "Skiping ECC\n"
     else
         cd $ECC_DIR && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 ; mv *.s $ASM_DIR/$i/sct ; echo "ECC SCT compiled"        
-        cd $ECC_DIR/ct && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 ; mv *.s $ASM_DIR/$i/sct ; echo -e "ECC CT compiled\n"
+        cd $ECC_DIR/ct && make clean > /dev/null 2>&1 ; make > /dev/null 2>&1 ; mv *.s $ASM_DIR/$i/ct ; echo -e "ECC CT compiled\n"
     fi
     
 done
