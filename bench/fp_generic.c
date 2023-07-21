@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 1
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -21,9 +21,16 @@ extern void fp_fromM(uint64_t *, uint64_t *);
 
 #include "cpucycles.c"
 #include "printbench.h"
+#include "randombytes.c"
 
 #define TIMINGS 10000
 #define OP 8
+
+void get_random_number(uint64_t *arr) {
+    uint8_t bytes[NLIMBS * 8 * 2];
+    randombytes(bytes, NLIMBS * 8 * 2);  // 64 bits are 8 bytes
+    memcpy(arr, bytes, NLIMBS * 8 * 2);
+}
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
     int op;
@@ -66,6 +73,10 @@ int main(void) {
     uint64_t values[OP][TIMINGS];  // contains all the measurements
 
     uint64_t a[NLIMBS * 2], b[NLIMBS * 2], c[NLIMBS * 2];
+    get_random_number(a);
+    get_random_number(b);
+    get_random_number(c);
+
     uint64_t r;
 
     // warmup
@@ -83,6 +94,9 @@ int main(void) {
     op = 0;
     // fp_add
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
+        get_random_number(c);
         cycles[i] = cpucycles();
         fp_add(a, b, c);
     }
@@ -91,6 +105,9 @@ int main(void) {
 
     // fp_sub
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
+        get_random_number(c);
         cycles[i] = cpucycles();
         fp_sub(a, b, c);
     }
@@ -99,6 +116,9 @@ int main(void) {
 
     // fp_mul
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
+        get_random_number(c);
         cycles[i] = cpucycles();
         fp_mul(a, b, c);
     }
@@ -107,6 +127,8 @@ int main(void) {
 
     // fp_sqr
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
         cycles[i] = cpucycles();
         fp_sqr(a, b);
     }
@@ -115,6 +137,9 @@ int main(void) {
 
     // fp_expm_noct
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
+        get_random_number(c);
         cycles[i] = cpucycles();
         fp_expm_noct(a, b, c);
     }
@@ -123,6 +148,8 @@ int main(void) {
 
     // fp_inv
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
         cycles[i] = cpucycles();
         fp_inv(a, b);
     }
@@ -131,6 +158,8 @@ int main(void) {
 
     // fp_toM
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
         cycles[i] = cpucycles();
         fp_toM(a, b);
     }
@@ -139,6 +168,8 @@ int main(void) {
 
     // fp_fromM
     for (i = 0; i < TIMINGS; i++) {
+        get_random_number(a);
+        get_random_number(b);
         cycles[i] = cpucycles();
         fp_fromM(a, b);
     }

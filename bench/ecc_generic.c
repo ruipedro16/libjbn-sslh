@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 1
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -31,9 +31,22 @@ extern void ecc_branchless_scalar_mul(ProjectivePoint *r, const ProjectivePoint 
 
 #include "cpucycles.c"
 #include "printbench.h"
+#include "randombytes.c"
 
 #define TIMINGS 10000
 #define OP 6
+
+void get_random_number(uint64_t *arr) {
+    uint8_t bytes[NLIMBS * 8];
+    randombytes(bytes, NLIMBS * 8);  // 64 bits are 8 bytes
+    memcpy(arr, bytes, NLIMBS * 8);
+}
+
+void get_random_projective_point(ProjectivePoint *p) {
+    get_random_number(p->x);
+    get_random_number(p->y);
+    get_random_number(p->z);
+}
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
     int op;
@@ -92,6 +105,7 @@ int main(void) {
     op = 0;
     // ecc_normalize
     for (i = 0; i < TIMINGS; i++) {
+        get_random_projective_point(&p1);
         cycles[i] = cpucycles();
         ecc_normalize(&p1, &ap);
     }
@@ -100,6 +114,7 @@ int main(void) {
 
     // ecc_double
     for (i = 0; i < TIMINGS; i++) {
+        get_random_projective_point(&p1);
         cycles[i] = cpucycles();
         ecc_double(&p1, &p2);
     }
@@ -108,6 +123,8 @@ int main(void) {
 
     // ecc_add
     for (i = 0; i < TIMINGS; i++) {
+        get_random_projective_point(&p1);
+        get_random_projective_point(&p2);
         cycles[i] = cpucycles();
         ecc_add(&p3, &p1, &p2);
     }
@@ -116,6 +133,8 @@ int main(void) {
 
     // ecc_mixed_add
     for (i = 0; i < TIMINGS; i++) {
+        get_random_projective_point(&p1);
+        get_random_projective_point(&p2);
         cycles[i] = cpucycles();
         ecc_mixed_add(&p3, &p1, &p2);
     }
@@ -124,6 +143,9 @@ int main(void) {
 
     // ecc_scalar_mul
     for (i = 0; i < TIMINGS; i++) {
+        get_random_projective_point(&p1);
+        get_random_projective_point(&p2);
+        get_random_number(scalar);
         cycles[i] = cpucycles();
         ecc_scalar_mul(&p1, &p2, scalar);
     }

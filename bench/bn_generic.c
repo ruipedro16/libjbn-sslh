@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 1
+#define NLIMBS 7
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -21,9 +21,16 @@ extern void bn_sqrn(uint64_t *, uint64_t *);
 
 #include "cpucycles.c"
 #include "printbench.h"
+#include "randombytes.c"
 
 #define TIMINGS 10000
 #define OP 8
+
+void get_random_number(uint64_t *arr) {
+    uint8_t bytes[NLIMBS * 8 * 2];
+    randombytes(bytes, NLIMBS * 8 * 2);  // 64 bits are 8 bytes
+    memcpy(arr, bytes, NLIMBS * 8 * 2);
+}
 
 void write_values(uint64_t values[OP][TIMINGS], uint64_t results[OP], char *op_str[OP]) {
     int op;
@@ -66,6 +73,9 @@ int main(void) {
     uint64_t values[OP][TIMINGS];  // contains all the measurements
 
     uint64_t a[NLIMBS * 2], b[NLIMBS * 2], c[NLIMBS * 2];
+    get_random_number(a);
+    get_random_number(b);
+    get_random_number(c);
 
     // warmup
     for (int i = 0; i < 10; i++) {
