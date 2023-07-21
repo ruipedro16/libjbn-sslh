@@ -426,7 +426,7 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar,
 
         k = 64;
         while { cond = (k > 0); } (cond) {
-            ms = #set_msf(cond, ms);
+            ms = #update_msf(cond, ms);
             sk = k; // spill k
 
             
@@ -434,7 +434,7 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar,
             st = t; // spill limb
 
             if (cf) {
-                ms = #set_msf(cf, ms);
+                ms = #update_msf(cf, ms);
 
                 // R0 ← R0 + R1
                 tmpx, tmpy, tmpz = _ecc_add(r0x, r0y, r0z, r1x, r1y, r1z, tmpx, tmpy, tmpz);
@@ -444,7 +444,7 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar,
                 tmpx, tmpy, tmpz = _ecc_double(r1x, r1y, r1z, tmpx, tmpy, tmpz);
                 r1x, r1y, r1z = __ecc_copy(tmpx, tmpy, tmpz, r1x, r1y, r1z);
             } else { 
-                ms = #set_msf(!cf, ms); 
+                ms = #update_msf(!cf, ms); 
 
                 // R1 ← R0 + R1
                 tmpx, tmpy, tmpz = _ecc_add(r0x, r0y, r0z, r1x, r1y, r1z, tmpx, tmpy, tmpz);
@@ -459,7 +459,7 @@ inline fn _ecc_scalar_mul(#secret stack u64[NLIMBS] scalar,
             k = #protect(k, ms);
             k -= 1;
         }
-        ms = #set_msf(!cond, ms);
+        ms = #update_msf(!cond, ms);
     }
 
     return r0x, r0y, r0z, ms;
@@ -499,7 +499,7 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
     for i = 0 to NLIMBS {
         k = 64;
         while { cond = (k > 0); } (cond) {
-            ms = #set_msf(cond, ms);
+            ms = #update_msf(cond, ms);
             sk = k; // spill k
             st = t; // spill limb
 
@@ -532,7 +532,7 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
             k = #protect(k, ms);
             k -= 1;
         }
-        ms = #set_msf(!cond, ms);
+        ms = #update_msf(!cond, ms);
     }
 
     return r0x, r0y, r0z, ms;

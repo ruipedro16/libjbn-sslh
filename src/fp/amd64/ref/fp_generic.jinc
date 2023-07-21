@@ -232,7 +232,7 @@ fn _fp_exp(reg ptr u64[NLIMBS] a _b r,
             _, cf, _, _, _, t = #SHR(t, 1);
 
             if (cf) {
-                ms = #set_msf(cf, ms);
+                ms = #update_msf(cf, ms);
 
                 r = rr;
                 r = #protect_ptr(r, ms);
@@ -243,7 +243,7 @@ fn _fp_exp(reg ptr u64[NLIMBS] a _b r,
                 r = _fp_mulU(r, x);
                 _x = x; //w
                 rr = r;
-            } else { ms = #set_msf(!cf, ms); }
+            } else { ms = #update_msf(!cf, ms); }
             
             x = _x; //w
             x = _fp_sqrU(x);
