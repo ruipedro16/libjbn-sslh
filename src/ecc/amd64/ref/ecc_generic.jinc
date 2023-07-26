@@ -498,7 +498,6 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
 
     for i = 0 to NLIMBS {
         t = scalar[(int) i];
-        t = #protect(t, ms);
 
         k = 64;
         while { cond = (k > 0); } (cond) {
@@ -516,7 +515,6 @@ inline fn _ecc_branchless_scalar_mul(#secret stack u64[NLIMBS] scalar
             doubleR0x, doubleR0y, doubleR0z = _ecc_double(r0x, r0y, r0z, doubleR0x, doubleR0y, doubleR0z);
 
             t = st;
-            t = #protect(t, ms);
             _, cf, _, _, _, t = #SHR(t, 1); // we only shift t here because previous instruction change the value of the cf
 
             // if !cf:
