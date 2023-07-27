@@ -1,2 +1,5 @@
 venv
 data
+*.o
+*.out
+params.h.gch
