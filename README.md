@@ -8,8 +8,8 @@
 - [compile-all-limbs.sh](scripts/compile-all-limbs.sh): Script to compile the library for the
 number of limbs between `$1` and `$2`.
 
-- [compile.sh](scripts/compile.sh): Compile the library and output the assembly files to the
-folder specified in `$1`. For 7 limbs, compilation takes approx. 2 minutes
+- [compile.sh](scripts/compile.sh): Compile the library and write the assembly files to the
+directory specified in `$1`. For 7 limbs, compilation takes approx. 2 minutes
 
 - [run-bench.sh](scripts/run-bench.sh): Script to generate benchmark results (for NLIMBS
 in [1, 12]). Results are stored in the `data` directory.
