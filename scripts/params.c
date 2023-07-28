@@ -244,8 +244,6 @@ void params_print_jasmin(uint64_t *P, uint64_t *RmP, uint64_t *Pm2, uint64_t *Rm
 
     fprintf(fout, "// glob_rM = R^2 mod P == 2^(2*NLIMBS*64) mod P\n");
     params_fprintf(fout, "u64[NLIMBS] glob_rM = {", R2modP, NLIMBS, "};");
-
-    fprintf(fout, "from Libjbn require \"common/fp/amd64/ref/fp_generic_export.jinc\"\n\n");
 }
 
 void params_print_c(uint64_t *P, uint64_t *RmP, uint64_t *Pm2, uint64_t *RmodP, uint64_t *R2modP,
@@ -273,9 +271,6 @@ void params_print_c(uint64_t *P, uint64_t *RmP, uint64_t *Pm2, uint64_t *RmodP, 
     params_fprintf(fout, "uint64_t glob_rM[NLIMBS] = {", R2modP, NLIMBS, "};");
 }
 
-//
-
-#ifdef _MAIN_PARAMS
 int main(int argc, char **argv) {
     size_t NLIMBS;
     uint64_t *P, *RmP, *Pm2, *RmodP, *R2modP;
@@ -313,4 +308,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-#endif

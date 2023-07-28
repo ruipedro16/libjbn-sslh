@@ -3,6 +3,7 @@
 
 #include <gmp.h>
 #include <stdint.h>
+#include <stdio.h>
 
 void params_load(mpz_t dest, int dest_init, const uint64_t *src, size_t NLIMBS);
 
