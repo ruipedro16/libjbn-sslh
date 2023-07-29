@@ -1,48 +1,53 @@
-// https://github.com/formosa-crypto/libjbn/blob/e5c3a1e875dd81d37b94107b73f6d51d5da1a0a3/src/sike/sike434/amd64/ref/bn_sike434.jinc
-
-u64[NLIMBS] glob_mp = {
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff,
-    0x7bc65c783158aea3,
-    0x6cfc5fd681c52056
-};
-
+// glob_p = P
 u64[NLIMBS] glob_p = {
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff,
-    0x7bc65c783158aea3,
-    0x6cfc5fd681c52056
+  0x137aa6119b9a2d9b,
+  0xf50b562e3bdbbcc2,
+  0x4c72e3ace200fc87,
+  0xe19a2c02d9f2e44c,
+  0xb5711f6a0240f25c,
+  0xe4792105ae3ed2c4
 };
 
-u64 glob_u0 = 1;
-
-u64[NLIMBS] glob_oneM = {
-    0x000000000000742c,
-    0x0000000000000000,
-    0x0000000000000000,
-    0xb90ff404fc000000,
-    0xd801a4fb559facd4,
-    0xe93254545f77410c
+// glob_mp = R - P == 2^(NLIMBS*64) - P
+u64[NLIMBS] glob_mp = {
+  0xec8559ee6465d265,
+  0x0af4a9d1c424433d,
+  0xb38d1c531dff0378,
+  0x1e65d3fd260d1bb3,
+  0x4a8ee095fdbf0da3,
+  0x1b86defa51c12d3b
 };
 
+// glob_pm2 = P - 2
 u64[NLIMBS] glob_pm2 = {
-    0xfffffffffffffffd,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff,
-    0x7bc65c783158aea3,
-    0x6cfc5fd681c52056
+  0x137aa6119b9a2d99,
+  0xf50b562e3bdbbcc2,
+  0x4c72e3ace200fc87,
+  0xe19a2c02d9f2e44c,
+  0xb5711f6a0240f25c,
+  0xe4792105ae3ed2c4
 };
 
-u64[NLIMBS] glob_rM = {
-    0x28e55b65dcd69b30,
-    0xacec7367768798c2,
-    0xab27973f8311688d,
-    0x175cc6af8d6c7c0b,
-    0xabcd92bf2dde347e,
-    0x69e16a61c7686d9a
+// (glob_u0 * P[0]) mod 2^64 == -1
+u64 glob_u0 = 0x44d770293e338f6d;
+
+// glob_oneM = R mod P == 2^(NLIMBS*64) mod P
+u64[NLIMBS] glob_oneM = {
+  0xec8559ee6465d265,
+  0x0af4a9d1c424433d,
+  0xb38d1c531dff0378,
+  0x1e65d3fd260d1bb3,
+  0x4a8ee095fdbf0da3,
+  0x1b86defa51c12d3b
 };
+
+// glob_rM = R^2 mod P == 2^(2*NLIMBS*64) mod P
+u64[NLIMBS] glob_rM = {
+  0x42a736349af1535a,
+  0x859e437f1fbb249f,
+  0x86fd1d8a78b82947,
+  0xb44c945f1157243c,
+  0x354bcd88ecad7d9c,
+  0x8ab5aa6ca7a27beb
+};
+

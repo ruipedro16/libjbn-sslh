@@ -225,8 +225,6 @@ void params_fprintf(FILE *f, char *s1, uint64_t *src, size_t NLIMBS, char *s2) {
 
 void params_print_jasmin(uint64_t *P, uint64_t *RmP, uint64_t *Pm2, uint64_t *RmodP,
                          uint64_t *R2modP, uint64_t u0, size_t NLIMBS, FILE *fout) {
-    fprintf(fout, "param int NLIMBS = %zu;\n\n", NLIMBS);
-
     fprintf(fout, "// glob_p = P\n");
     params_fprintf(fout, "u64[NLIMBS] glob_p = {", P, NLIMBS, "};");
 

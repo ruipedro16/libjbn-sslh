@@ -7,7 +7,7 @@ DATA_DIR=$BASEDIR/data
 PARAM_DIR="$BENCH_DIR/param"
 
 MIN_LIMBS=1
-MAX_LIMBS=5
+MAX_LIMBS=12
 
 CFLAGS="-Wall -Wno-unused-function -Wno-unused-variable" #-Ofast -march=native -fomit-frame-pointer"
 
