@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 7
+#define NLIMBS 4
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -73,9 +73,6 @@ int main(void) {
     uint64_t values[OP][TIMINGS];  // contains all the measurements
 
     uint64_t a[NLIMBS * 2], b[NLIMBS * 2], c[NLIMBS * 2];
-    get_random_number(a);
-    get_random_number(b);
-    get_random_number(c);
 
     // warmup
     for (int i = 0; i < 10; i++) {
@@ -91,6 +88,8 @@ int main(void) {
 
     op = 0;
     // bn_eq
+    get_random_number(a);
+    get_random_number(b);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_eq(a, b);
@@ -99,6 +98,7 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_test0
+    get_random_number(a);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_test0(a);
@@ -107,6 +107,7 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_copy
+    get_random_number(a);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_copy(a, b);
@@ -115,6 +116,7 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_set0
+    get_random_number(a);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_set0(a);
@@ -123,6 +125,8 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_addn
+    get_random_number(a);
+    get_random_number(b);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_addn(a, b, c);
@@ -131,6 +135,8 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_subn
+    get_random_number(a);
+    get_random_number(b);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_subn(a, b, c);
@@ -139,6 +145,8 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_muln
+    get_random_number(a);
+    get_random_number(b);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_muln(a, b, c);
@@ -147,6 +155,7 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // bn_sqrn
+    get_random_number(b);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         bn_sqrn(a, b);

@@ -21,7 +21,7 @@ rm -f $TEST_DIR/*.s
 cd $FP_DIR || exit 1
 
 # Make sure src is SCT
-jasminc -checkSCT fp_generic_export.jinc 2> /dev/null || (echo "NOT SCT" ; exit 2)
+jasminc -checkSCT fp_generic_export.jinc > /dev/null || (echo "NOT SCT" ; exit 2)
 
 rm -f *.s # same as make clean
 (make > /dev/null 2>&1 ; echo "Compiled Fp") || (echo "Fp compilation failed" ; exit 3)
@@ -31,7 +31,7 @@ mv *.s $TEST_DIR
 cd $ECC_DIR || exit 1
 
 # Make sure src is SCT
-jasminc -checkSCT ecc_generic_export.jinc 2> /dev/null || (echo "NOT SCT" ; exit 2)
+jasminc -checkSCT ecc_generic_export.jinc > /dev/null || (echo "NOT SCT" ; exit 2)
 
 rm -f *.s # same as make clean
 (make > /dev/null 2>&1 && echo -e "Compiled Ecc\n") || (echo "Ecc compilation failed" ; exit 3)

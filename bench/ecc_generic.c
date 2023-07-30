@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifndef NLIMBS
-#define NLIMBS 7
+#define NLIMBS 4
 #endif
 
 #define xstr(s, e) str(s) #e  // concatenates
@@ -104,8 +104,8 @@ int main(void) {
 
     op = 0;
     // ecc_normalize
+    get_random_projective_point(&p1);
     for (i = 0; i < TIMINGS; i++) {
-        get_random_projective_point(&p1);
         cycles[i] = cpucycles();
         ecc_normalize(&p1, &ap);
     }
@@ -113,8 +113,8 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // ecc_double
+    get_random_projective_point(&p1);
     for (i = 0; i < TIMINGS; i++) {
-        get_random_projective_point(&p1);
         cycles[i] = cpucycles();
         ecc_double(&p1, &p2);
     }
@@ -122,9 +122,9 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // ecc_add
+    get_random_projective_point(&p1);
+    get_random_projective_point(&p2);
     for (i = 0; i < TIMINGS; i++) {
-        get_random_projective_point(&p1);
-        get_random_projective_point(&p2);
         cycles[i] = cpucycles();
         ecc_add(&p3, &p1, &p2);
     }
@@ -132,9 +132,9 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // ecc_mixed_add
+    get_random_projective_point(&p1);
+    get_random_projective_point(&p2);
     for (i = 0; i < TIMINGS; i++) {
-        get_random_projective_point(&p1);
-        get_random_projective_point(&p2);
         cycles[i] = cpucycles();
         ecc_mixed_add(&p3, &p1, &p2);
     }
@@ -142,10 +142,9 @@ int main(void) {
     results[op++] = cpucycles_median(cycles, TIMINGS);
 
     // ecc_scalar_mul
+    get_random_projective_point(&p1);
+    get_random_number(scalar);
     for (i = 0; i < TIMINGS; i++) {
-        get_random_projective_point(&p1);
-        get_random_projective_point(&p2);
-        get_random_number(scalar);
         cycles[i] = cpucycles();
         ecc_scalar_mul(&p1, &p2, scalar);
     }
@@ -154,6 +153,8 @@ int main(void) {
 
     // branchless scalar multiplication
     // ecc_scalar_mul
+    get_random_projective_point(&p1);
+    get_random_number(scalar);
     for (i = 0; i < TIMINGS; i++) {
         cycles[i] = cpucycles();
         ecc_branchless_scalar_mul(&p1, &p2, scalar);

@@ -1,38 +1,43 @@
-// https://github.com/formosa-crypto/libjbn/blob/e5c3a1e875dd81d37b94107b73f6d51d5da1a0a3/src/sike/sike434/amd64/ref/bn_sike434.jinc
-
-u64[NLIMBS] glob_mp = {
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff
-};
-
+// glob_p = P
 u64[NLIMBS] glob_p = {
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff
+  0x1f8a699d11451689,
+  0xd6d6398c6da77a48,
+  0xa9595d9ed2c447b4,
+  0xdf24f70e465742f3
 };
 
-u64 glob_u0 = 1;
-
-u64[NLIMBS] glob_oneM = {
-    0x000000000000742c,
-    0x0000000000000000,
-    0x0000000000000000,
-    0xb90ff404fc000000
+// glob_mp = R - P == 2^(NLIMBS*64) - P
+u64[NLIMBS] glob_mp = {
+  0xe0759662eebae977,
+  0x2929c673925885b7,
+  0x56a6a2612d3bb84b,
+  0x20db08f1b9a8bd0c
 };
 
+// glob_pm2 = P - 2
 u64[NLIMBS] glob_pm2 = {
-    0xfffffffffffffffd,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xfdc1767ae2ffffff
+  0x1f8a699d11451687,
+  0xd6d6398c6da77a48,
+  0xa9595d9ed2c447b4,
+  0xdf24f70e465742f3
 };
 
-u64[NLIMBS] glob_rM = {
-    0x28e55b65dcd69b30,
-    0xacec7367768798c2,
-    0xab27973f8311688d,
-    0x175cc6af8d6c7c0b
+// (glob_u0 * P[0]) mod 2^64 == -1
+u64 glob_u0 = 0xbc0720cc0170c047;
+
+// glob_oneM = R mod P == 2^(NLIMBS*64) mod P
+u64[NLIMBS] glob_oneM = {
+  0xe0759662eebae977,
+  0x2929c673925885b7,
+  0x56a6a2612d3bb84b,
+  0x20db08f1b9a8bd0c
 };
+
+// glob_rM = R^2 mod P == 2^(2*NLIMBS*64) mod P
+u64[NLIMBS] glob_rM = {
+  0xa84c6ddd05fd2f7b,
+  0x66f79f78fac9e5d4,
+  0x051138124a962183,
+  0x4222cf08b9fb6f1e
+};
+
